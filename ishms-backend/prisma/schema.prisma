@@ -1,0 +1,405 @@
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum RoleName {
+  SUPER_ADMIN
+  ADMIN
+  DOCTOR
+  NURSE
+  RECEPTIONIST
+  PHARMACIST
+}
+
+enum BedStatus {
+  Available
+  Occupied
+  Reserved
+  Cleaning
+  Maintenance
+  TransferPending
+}
+
+enum BedType {
+  General
+  ICU
+  Emergency
+  Isolation
+  Maternity
+  OperationRecovery
+}
+
+enum OPDTokenStatus {
+  Waiting
+  InConsultation
+  Completed
+  Cancelled
+  NoShow
+}
+
+enum OPDTokenPriority {
+  Normal
+  Emergency
+  SeniorCitizen
+  Pregnancy
+}
+
+enum AdmissionStatus {
+  Admitted
+  Discharged
+  Transferred
+}
+
+enum InventoryTransactionType {
+  StockIn
+  StockOut
+  StockTransfer
+  StockAudit
+}
+
+enum AlertType {
+  MedicineExpiry
+  LowStock
+  BedShortage
+  EmergencyCase
+  QueueOverflow
+  HighOccupancy
+  SystemError
+}
+
+enum AlertStatus {
+  Active
+  Acknowledged
+  Resolved
+}
+
+enum Severity {
+  Low
+  Medium
+  High
+  Critical
+}
+
+enum ReportType {
+  Daily
+  Weekly
+  Monthly
+  Department
+  BedUtilization
+  MedicineConsumption
+  PatientStats
+}
+
+model Role {
+  id          String    @id @default(uuid())
+  name        RoleName  @unique
+  users       User[]
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+}
+
+model Hospital {
+  id          String         @id @default(uuid())
+  name        String
+  code        String         @unique
+  address     String?
+  phone       String?
+  users       User[]
+  departments Department[]
+  medicines   Medicine[]
+  alerts      Alert[]
+  syncs       HospitalSync[]
+  createdAt   DateTime       @default(now()) @map("created_at")
+  updatedAt   DateTime       @updatedAt @map("updated_at")
+  deletedAt   DateTime?      @map("deleted_at")
+}
+
+model User {
+  id                    String                 @id @default(uuid())
+  email                 String                 @unique
+  password              String
+  firstName             String                 @map("first_name")
+  lastName              String                 @map("last_name")
+  roleId                String                 @map("role_id")
+  role                  Role                   @relation(fields: [roleId], references: [id])
+  hospitalId            String?                @map("hospital_id")
+  hospital              Hospital?              @relation(fields: [hospitalId], references: [id])
+  notifications         Notification[]
+  auditLogs             AuditLog[]
+  transactions          InventoryTransaction[] @relation("CreatedBy")
+  consultations         Consultation[]         @relation("DoctorConsultations")
+  admissions            Admission[]            @relation("DoctorAdmissions")
+  opdTokens             OPDToken[]             @relation("DoctorTokens")
+  reports               Report[]               @relation("GeneratedBy")
+  appointments          Appointment[]          @relation("DoctorAppointments")
+  createdAt             DateTime               @default(now()) @map("created_at")
+  updatedAt             DateTime               @updatedAt @map("updated_at")
+  deletedAt             DateTime?              @map("deleted_at")
+}
+
+model Patient {
+  id                    String           @id @default(uuid())
+  uhid                  String           @unique
+  name                  String
+  age                   Int
+  gender                String
+  bloodGroup            String?          @map("blood_group")
+  phone                 String?
+  address               String?
+  emergencyContactName  String?          @map("emergency_contact_name")
+  emergencyContactPhone String?          @map("emergency_contact_phone")
+  isAdmitted            Boolean          @default(false) @map("is_admitted")
+  histories             PatientHistory[]
+  admissions            Admission[]
+  opdTokens             OPDToken[]
+  appointments          Appointment[]
+  createdAt             DateTime         @default(now()) @map("created_at")
+  updatedAt             DateTime         @updatedAt @map("updated_at")
+  deletedAt             DateTime?        @map("deleted_at")
+}
+
+model PatientHistory {
+  id         String    @id @default(uuid())
+  patientId  String    @map("patient_id")
+  patient    Patient   @relation(fields: [patientId], references: [id])
+  symptoms   String
+  diagnosis  String
+  vitals     Json?
+  notes      String?
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+  deletedAt  DateTime? @map("deleted_at")
+}
+
+model Department {
+  id           String        @id @default(uuid())
+  name         String
+  hospitalId   String        @map("hospital_id")
+  hospital     Hospital      @relation(fields: [hospitalId], references: [id])
+  wards        Ward[]
+  admissions   Admission[]
+  opdTokens    OPDToken[]
+  appointments Appointment[]
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
+  deletedAt    DateTime?     @map("deleted_at")
+}
+
+model Ward {
+  id           String     @id @default(uuid())
+  name         String
+  type         BedType
+  departmentId String     @map("department_id")
+  department   Department @relation(fields: [departmentId], references: [id])
+  rooms        Room[]
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+  deletedAt    DateTime?  @map("deleted_at")
+}
+
+model Room {
+  id        String    @id @default(uuid())
+  name      String
+  wardId    String    @map("ward_id")
+  ward      Ward      @relation(fields: [wardId], references: [id])
+  beds      Bed[]
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+}
+
+model Bed {
+  id         String      @id @default(uuid())
+  label      String
+  roomId     String      @map("room_id")
+  room       Room        @relation(fields: [roomId], references: [id])
+  status     BedStatus   @default(Available)
+  type       BedType     @default(General)
+  admissions Admission[]
+  createdAt  DateTime    @default(now()) @map("created_at")
+  updatedAt  DateTime    @updatedAt @map("updated_at")
+  deletedAt  DateTime?   @map("deleted_at")
+}
+
+model OPDToken {
+  id           String           @id @default(uuid())
+  tokenNumber  Int              @map("token_number")
+  patientId    String           @map("patient_id")
+  patient      Patient          @relation(fields: [patientId], references: [id])
+  departmentId String           @map("department_id")
+  department   Department       @relation(fields: [departmentId], references: [id])
+  doctorId     String?          @map("doctor_id")
+  doctor       User?            @relation("DoctorTokens", fields: [doctorId], references: [id])
+  priority     OPDTokenPriority @default(Normal)
+  status       OPDTokenStatus   @default(Waiting)
+  calledAt     DateTime?        @map("called_at")
+  completedAt  DateTime?        @map("completed_at")
+  consultation Consultation?
+  createdAt    DateTime         @default(now()) @map("created_at")
+  updatedAt    DateTime         @updatedAt @map("updated_at")
+  deletedAt    DateTime?        @map("deleted_at")
+}
+
+model Consultation {
+  id                     String    @id @default(uuid())
+  tokenId                String    @unique @map("token_id")
+  token                  OPDToken  @relation(fields: [tokenId], references: [id])
+  patientId              String    @map("patient_id")
+  doctorId               String    @map("doctor_id")
+  doctor                 User      @relation("DoctorConsultations", fields: [doctorId], references: [id])
+  symptoms               String
+  diagnosis              String
+  vitals                 Json?
+  prescriptions          Json?
+  labRecommendations     Json?
+  admissionRecommended   Boolean   @default(false) @map("admission_recommended")
+  followUpDate           DateTime? @map("follow_up_date")
+  notes                  String?
+  createdAt              DateTime  @default(now()) @map("created_at")
+  updatedAt              DateTime  @updatedAt @map("updated_at")
+  deletedAt              DateTime? @map("deleted_at")
+}
+
+model Admission {
+  id           String          @id @default(uuid())
+  patientId    String          @map("patient_id")
+  patient      Patient         @relation(fields: [patientId], references: [id])
+  departmentId String          @map("department_id")
+  department   Department      @relation(fields: [departmentId], references: [id])
+  doctorId     String          @map("doctor_id")
+  doctor       User            @relation("DoctorAdmissions", fields: [doctorId], references: [id])
+  bedId        String          @map("bed_id")
+  bed          Bed             @relation(fields: [bedId], references: [id])
+  admittedAt   DateTime        @default(now()) @map("admitted_at")
+  status       AdmissionStatus @default(Admitted)
+  discharges   Discharge[]
+  createdAt    DateTime        @default(now()) @map("created_at")
+  updatedAt    DateTime        @updatedAt @map("updated_at")
+  deletedAt    DateTime?       @map("deleted_at")
+}
+
+model Discharge {
+  id           String    @id @default(uuid())
+  admissionId  String    @map("admission_id")
+  admission    Admission @relation(fields: [admissionId], references: [id])
+  dischargedAt DateTime  @default(now()) @map("discharged_at")
+  reason       String?
+  summary      String?
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  deletedAt    DateTime? @map("deleted_at")
+}
+
+model Medicine {
+  id                String                 @id @default(uuid())
+  name              String
+  genericName       String                 @map("generic_name")
+  batchNumber       String                 @map("batch_number")
+  manufacturer      String
+  purchaseDate      DateTime               @map("purchase_date")
+  expiryDate        DateTime               @map("expiry_date")
+  unitPrice         Float                  @map("unit_price")
+  stockQuantity     Int                    @map("stock_quantity")
+  thresholdQuantity Int                    @map("threshold_quantity")
+  hospitalId        String                 @map("hospital_id")
+  hospital          Hospital               @relation(fields: [hospitalId], references: [id])
+  transactions      InventoryTransaction[]
+  createdAt         DateTime               @default(now()) @map("created_at")
+  updatedAt         DateTime               @updatedAt @map("updated_at")
+  deletedAt         DateTime?              @map("deleted_at")
+}
+
+model InventoryTransaction {
+  id          String                   @id @default(uuid())
+  medicineId  String                   @map("medicine_id")
+  medicine    Medicine                 @relation(fields: [medicineId], references: [id])
+  quantity    Int
+  type        InventoryTransactionType
+  remarks     String?
+  createdById String                   @map("created_by_id")
+  createdBy   User                     @relation("CreatedBy", fields: [createdById], references: [id])
+  createdAt   DateTime                 @default(now()) @map("created_at")
+  updatedAt   DateTime                 @updatedAt @map("updated_at")
+  deletedAt   DateTime?                @map("deleted_at")
+}
+
+model Alert {
+  id         String      @id @default(uuid())
+  type       AlertType
+  status     AlertStatus @default(Active)
+  message    String
+  severity   Severity    @default(Medium)
+  hospitalId String      @map("hospital_id")
+  hospital   Hospital    @relation(fields: [hospitalId], references: [id])
+  createdAt  DateTime    @default(now()) @map("created_at")
+  updatedAt  DateTime    @updatedAt @map("updated_at")
+  deletedAt  DateTime?   @map("deleted_at")
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id])
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?  @map("user_id")
+  user      User?    @relation(fields: [userId], references: [id])
+  action    String
+  details   Json?
+  ipAddress String?  @map("ip_address")
+  createdAt DateTime @default(now()) @map("created_at")
+}
+
+model HospitalSync {
+  id           String    @id @default(uuid())
+  hospitalId   String    @map("hospital_id")
+  hospital     Hospital  @relation(fields: [hospitalId], references: [id])
+  lastSyncedAt DateTime  @default(now()) @map("last_synced_at")
+  syncStatus   String    @map("sync_status")
+  payload      Json?
+  createdAt    DateTime  @default(now()) @map("created_at")
+}
+
+model Report {
+  id            String     @id @default(uuid())
+  title         String
+  type          ReportType
+  fileUrl       String?    @map("file_url")
+  generatedById String     @map("generated_by_id")
+  generatedBy   User       @relation("GeneratedBy", fields: [generatedById], references: [id])
+  createdAt     DateTime   @default(now()) @map("created_at")
+}
+
+enum AppointmentStatus {
+  Scheduled
+  Completed
+  Cancelled
+  NoShow
+}
+
+model Appointment {
+  id              String            @id @default(uuid())
+  patientId       String            @map("patient_id")
+  patient         Patient           @relation(fields: [patientId], references: [id])
+  doctorId        String            @map("doctor_id")
+  doctor          User              @relation("DoctorAppointments", fields: [doctorId], references: [id])
+  departmentId    String            @map("department_id")
+  department      Department        @relation(fields: [departmentId], references: [id])
+  appointmentDate DateTime          @map("appointment_date")
+  timeSlot        String            @map("time_slot")
+  status          AppointmentStatus @default(Scheduled)
+  notes           String?
+  createdAt       DateTime          @default(now()) @map("created_at")
+  updatedAt       DateTime          @updatedAt @map("updated_at")
+  deletedAt       DateTime?         @map("deleted_at")
+}

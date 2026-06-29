@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: ishrms-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: swati26
+      POSTGRES_DB: ishms_db
+    ports:
+      - "5435:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: ./ishms-backend
+      dockerfile: Dockerfile
+    container_name: ishrms-backend
+    restart: always
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000
+      - DB_USER=postgres
+      - DB_HOST=postgres
+      - DB_NAME=ishms_db
+      - DB_PASSWORD=swati26
+      - DB_PORT=5432
+      - DATABASE_URL=postgresql://postgres:swati26@postgres:5432/ishms_db?schema=public
+      - JWT_SECRET=super_secret_ishrms_key_2026
+      - JWT_REFRESH_SECRET=super_secret_refresh_key_2026
+    depends_on:
+      - postgres
+
+  frontend:
+    build:
+      context: ./ishms-frontend
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_URL=http://localhost:5000/api
+        - VITE_SOCKET_URL=http://localhost:5000
+    container_name: ishrms-frontend
+    restart: always
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
