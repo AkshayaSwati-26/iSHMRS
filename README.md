@@ -12,20 +12,15 @@
 
 ---
 
-## 🛠️ Detailed Technology Stack
+## 🛠️ Technology Stack
 
-| Layer | Technology | Key Function / Purpose |
+| Layer | Technology | Function |
 | :--- | :--- | :--- |
-| **Client Portal** | React.js (Vite) | High-speed single-page UI rendering and client-side routing |
-| **Design System** | TailwindCSS | Modern, utility-first CSS layout styling with glassmorphism sheets |
-| **Motion Engine** | Framer Motion | Smooth, physics-based grid transitions and active indicator spring animations |
-| **Insights & Data** | Recharts (SVG) | Renders patient queues, bed census trends, and stock levels |
-| **State Sync** | React Query | Automatic cache invalidation and query pre-fetching |
-| **Telemetry Sync** | Socket.io | Real-time WebSocket broadcasting of ward bed status changes |
-| **API Server** | Node.js (Express) | Scalable REST API routing, request validation, and RBAC middlewares |
-| **Database ORM** | Prisma ORM | Schema modeling, migration management, and relational mapping |
-| **Database** | PostgreSQL | Secure, relational ACID-compliant data persistence |
-| **Vocal Caller** | Web Speech API | Client-side Text-to-Speech (TTS) queue announcement calling |
+| **UI & Styles** | React (Vite) + TailwindCSS | High-speed client rendering & glassmorphism styling |
+| **Visuals & Motion** | Framer Motion + Recharts (SVG) | Micro-interactions, spring animations & live charts |
+| **API & Realtime** | Node.js (Express) + Socket.io | Scalable backend routers & bidirectional event sync |
+| **Database & ORM** | PostgreSQL + Prisma ORM | Relational ACID storage & modern migrations |
+| **Voice Caller** | Web Speech API | Client-side Text-to-Speech waiting room announcer |
 
 ---
 
@@ -45,54 +40,108 @@
 
 ---
 
-## 🔄 System Workflow
+## 🔄 System Architecture & Workflow
 
 ```mermaid
-graph TD
-    classDef startEnd fill:#d1fae5,stroke:#10b981,stroke-width:2px,color:#065f46;
-    classDef process fill:#dbeafe,stroke:#3b82f6,stroke-width:2px,color:#1e3a8a;
-    classDef decision fill:#fef3c7,stroke:#f59e0b,stroke-width:2px,color:#78350f;
-    classDef alert fill:#fee2e2,stroke:#ef4444,stroke-width:2px,color:#7f1d1d;
+graph TB
+    classDef actor fill:#f8fafc,stroke:#64748b,stroke-width:1px,stroke-dasharray: 4 4;
+    classDef workflow fill:#f0fdf4,stroke:#16a34a,stroke-width:2px;
+    classDef service fill:#eff6ff,stroke:#2563eb,stroke-width:2px;
+    classDef db fill:#fff7ed,stroke:#ea580c,stroke-width:2px;
+    classDef infra fill:#faf5ff,stroke:#8b5cf6,stroke-width:2px;
 
-    A[Intake: Registration]:::startEnd --> B(Receptionist: Generate Token):::process
-    B --> C{Severity Class}:::decision
-    C -->|Emergency| D[Escalate to Doctor]:::alert
-    C -->|Normal| E[Wait in OPD Queue]:::process
-    D & E --> F[Doctor: Consult & Diagnose]:::process
-    F --> G{Admit Patient?}:::decision
-    G -->|Yes| H[Allocate Bed on Board]:::process
-    G -->|No| I[Write Rx & Pharmacy dispatch]:::process
-    H --> J[Nurse: Ward Inpatient care]:::process
-    J --> K[Discharge & Bed Sanitization]:::process
-    K --> L[Sensor updates Bed to Available]:::startEnd
-    I --> M[Pharmacist: Dispense Meds]:::process
-    M --> N[Sync Inventory Deductions]:::startEnd
+    subgraph EA [External Actors]
+        direction TB
+        Patients((Patients))
+        Receptionist((Receptionist))
+        Doctors((Doctors))
+        Nurses((Nurses))
+        Pharmacist((Pharmacist))
+    end
+    class EA actor;
+
+    subgraph Steps [Clinical Workflows]
+        direction TB
+        subgraph S1 [1. Patient Intake]
+            Register[Register / Retrieve Patient] --> CreateToken[Create OPD Token]
+        end
+        subgraph S2 [2. Doctor Consultation]
+            ViewQueue[View Prioritized Queue] --> CheckVitals[Check Vitals & Symptoms] --> Decision{Decision}
+            Decision -->|Outpatient| Rx[Write Prescription]
+            Decision -->|Inpatient| AdmitOrder[Admit Order]
+        end
+        subgraph S3 [3. Bed Allocation]
+            OpenBoard[Open Bed Board] --> CheckStatus[View Bed Status] --> AssignBed[Assign Available Bed]
+        end
+        subgraph S4 [4. Inpatient Care]
+            Monitor[Monitor Treatment] --> Transfer[Transfer Bed] --> Discharge[Discharge Inpatient]
+        end
+        subgraph S5 [5. Pharmacy & Inventory]
+            RetrieveRx[Retrieve Prescription] --> Dispense[Dispense Medication] --> DeductStock[Deduct Stock & Alert]
+        end
+    end
+    class S1,S2,S3,S4,S5 workflow;
+
+    subgraph Services [Application & Backend Services]
+        PatientServ[Patient Service]
+        QueueServ[OPD Queue Service]
+        ConsultServ[Consultation Service]
+        BedServ[Bed Management Service]
+        PharmacyServ[Pharmacy Service]
+        AuditServ[Audit Log Service]
+    end
+    class PatientServ,QueueServ,ConsultServ,BedServ,PharmacyServ,AuditServ service;
+
+    subgraph CentralDB [Centralized PostgreSQL Database]
+        DB[(PostgreSQL Relational Storage)]
+    end
+    class DB db;
+
+    subgraph Infra [Infrastructure & Integrations]
+        Auth[JWT Auth]
+        WebSockets[Socket.io Real-time]
+        TTS[Speech Synthesis Queue Caller]
+    end
+    class Auth,WebSockets,TTS infra;
+
+    %% Connections
+    Receptionist --> S1
+    Doctors --> S2
+    Receptionist --> S3
+    Nurses --> S4
+    Pharmacist --> S5
+
+    S1 & S2 & S3 & S4 & S5 -.-> Services
+    Services -.-> CentralDB
+    CentralDB -.-> Infra
 ```
 
-### Step 1: Patient Intake & Token Generation (Receptionist)
+### Workflow Steps
+
+#### Step 1: Patient Intake & Token Generation (Receptionist)
 1. **Registration**: Register a new patient or retrieve an existing profile using the UHID.
 2. **Generate OPD Token**: Select the Department and Priority (Emergency, Senior Citizen/Pregnancy, or Normal).
 3. **Queue Update**: The token is added to the database, and the doctor's queue updates in real-time.
 
-### Step 2: Doctor Consultation (Doctor)
+#### Step 2: Doctor Consultation (Doctor)
 1. **View Queue**: The doctor sees the prioritized patient queue.
 2. **Consultation**: Record Vitals, Symptoms, and Diagnosis.
 3. **Decision**:
    - **Outpatient**: Generate a prescription and send the patient to the pharmacy.
    - **Inpatient**: Create an admission order for ward allocation.
 
-### Step 3: Bed Allocation (Receptionist)
+#### Step 3: Bed Allocation (Receptionist)
 1. **Open Bed Board**: View available hospital beds.
 2. **Bed Status**: Available, Occupied, Cleaning, or Maintenance.
 3. **Assign Bed**: Allocate an available bed using the patient's UHID. The bed status updates instantly.
 
-### Step 4: Inpatient Care (Doctors & Nurses)
+#### Step 4: Inpatient Care (Doctors & Nurses)
 1. **Monitor Patient**: Update treatment and care records.
 2. **Transfer (If Needed)**: Move the patient to another available bed.
 3. **Discharge**: Complete the discharge process.
 4. **Bed Release**: The bed moves to Cleaning and is later marked Available.
 
-### Step 5: Pharmacy & Inventory (Pharmacist)
+#### Step 5: Pharmacy & Inventory (Pharmacist)
 1. **Retrieve Prescription**: Search using the patient's UHID.
 2. **Dispense Medicine**: Verify stock and dispense medication.
 3. **Inventory Update**: Stock is reduced, the transaction is logged, and a Low Stock Alert is generated if required.
