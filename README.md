@@ -43,77 +43,31 @@
 ## 🔄 System Architecture & Workflow
 
 ```mermaid
-graph TB
-    classDef actor fill:#f8fafc,stroke:#64748b,stroke-width:1px,stroke-dasharray: 4 4;
-    classDef workflow fill:#f0fdf4,stroke:#16a34a,stroke-width:2px;
-    classDef service fill:#eff6ff,stroke:#2563eb,stroke-width:2px;
-    classDef db fill:#fff7ed,stroke:#ea580c,stroke-width:2px;
-    classDef infra fill:#faf5ff,stroke:#8b5cf6,stroke-width:2px;
+graph TD
+    %% Custom Node Styling for Light & Dark Mode visibility
+    classDef actor fill:#2563eb,stroke:#1d4ed8,stroke-width:2px,color:#ffffff;
+    classDef workflow fill:#059669,stroke:#047857,stroke-width:2px,color:#ffffff;
+    classDef service fill:#4f46e5,stroke:#4338ca,stroke-width:2px,color:#ffffff;
+    classDef db fill:#ea580c,stroke:#b45309,stroke-width:2px,color:#ffffff;
+    classDef alert fill:#dc2626,stroke:#b91c1c,stroke-width:2px,color:#ffffff;
 
-    subgraph EA [External Actors]
-        direction TB
-        Patients((Patients))
-        Receptionist((Receptionist))
-        Doctors((Doctors))
-        Nurses((Nurses))
-        Pharmacist((Pharmacist))
-    end
-    class EA actor;
+    A[Receptionist: Patient Registration & OPD Token]:::workflow --> B{OPD Case Priority}:::workflow
+    
+    B -->|Normal Queue| C[Doctor: Consultation & Diagnosis]:::workflow
+    B -->|Emergency Escalation| D[Immediate Critical Care]:::alert
+    
+    C & D --> E{Inpatient Admission Ordered?}:::workflow
+    
+    E -->|Yes| F[Ward Management: Bed Allocation & Transfer]:::workflow
+    E -->|No| G[Pharmacy Dispatch: Prescription Issued]:::workflow
+    
+    F --> H[Sanitization Loop: Bed Cleaning & Release]:::workflow
+    G --> I[Pharmacist: Dispense Medicine & Inventory Sync]:::workflow
 
-    subgraph Steps [Clinical Workflows]
-        direction TB
-        subgraph S1 [1. Patient Intake]
-            Register[Register / Retrieve Patient] --> CreateToken[Create OPD Token]
-        end
-        subgraph S2 [2. Doctor Consultation]
-            ViewQueue[View Prioritized Queue] --> CheckVitals[Check Vitals & Symptoms] --> Decision{Decision}
-            Decision -->|Outpatient| Rx[Write Prescription]
-            Decision -->|Inpatient| AdmitOrder[Admit Order]
-        end
-        subgraph S3 [3. Bed Allocation]
-            OpenBoard[Open Bed Board] --> CheckStatus[View Bed Status] --> AssignBed[Assign Available Bed]
-        end
-        subgraph S4 [4. Inpatient Care]
-            Monitor[Monitor Treatment] --> Transfer[Transfer Bed] --> Discharge[Discharge Inpatient]
-        end
-        subgraph S5 [5. Pharmacy & Inventory]
-            RetrieveRx[Retrieve Prescription] --> Dispense[Dispense Medication] --> DeductStock[Deduct Stock & Alert]
-        end
-    end
-    class S1,S2,S3,S4,S5 workflow;
-
-    subgraph Services [Application & Backend Services]
-        PatientServ[Patient Service]
-        QueueServ[OPD Queue Service]
-        ConsultServ[Consultation Service]
-        BedServ[Bed Management Service]
-        PharmacyServ[Pharmacy Service]
-        AuditServ[Audit Log Service]
-    end
-    class PatientServ,QueueServ,ConsultServ,BedServ,PharmacyServ,AuditServ service;
-
-    subgraph CentralDB [Centralized PostgreSQL Database]
-        DB[(PostgreSQL Relational Storage)]
-    end
-    class DB db;
-
-    subgraph Infra [Infrastructure & Integrations]
-        Auth[JWT Auth]
-        WebSockets[Socket.io Real-time]
-        TTS[Speech Synthesis Queue Caller]
-    end
-    class Auth,WebSockets,TTS infra;
-
-    %% Connections
-    Receptionist --> S1
-    Doctors --> S2
-    Receptionist --> S3
-    Nurses --> S4
-    Pharmacist --> S5
-
-    S1 & S2 & S3 & S4 & S5 -.-> Services
-    Services -.-> CentralDB
-    CentralDB -.-> Infra
+    %% System Architecture Layers
+    H & I -.-> J[iSHRMS API Microservices]:::service
+    J -.-> K[(PostgreSQL Central Database)]:::db
+    J -.-> L[Real-time WebSocket & TTS Engines]:::service
 ```
 
 ### Workflow Steps
