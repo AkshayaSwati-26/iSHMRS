@@ -43,24 +43,168 @@
 ## 🔄 System Architecture & Workflow
 
 ```mermaid
-graph TD
-    %% Styling - Professional Clean Blue Accents
-    classDef startEnd fill:#eff6ff,stroke:#3b82f6,stroke-width:1.5px,color:#1e3a8a;
-    classDef step fill:#ffffff,stroke:#94a3b8,stroke-width:1px,color:#334155;
-    classDef decision fill:#eff6ff,stroke:#2563eb,stroke-width:1.5px,color:#1e3a8a;
-    classDef blueStep fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#1e3a8a;
+graph TB
+    %% Custom Styling definitions for visual layers
+    classDef userStyle fill:#0284c7,stroke:#0369a1,stroke-width:1.5px,color:#ffffff,font-weight:bold;
+    classDef feStyle fill:#0d9488,stroke:#0f766e,stroke-width:1.5px,color:#ffffff,font-weight:bold;
+    classDef gatewayStyle fill:#2563eb,stroke:#1d4ed8,stroke-width:1.5px,color:#ffffff,font-weight:bold;
+    classDef beStyle fill:#4f46e5,stroke:#4338ca,stroke-width:1.5px,color:#ffffff,font-weight:bold;
+    classDef rtStyle fill:#06b6d4,stroke:#0891b2,stroke-width:1.5px,color:#ffffff,font-weight:bold;
+    classDef dbStyle fill:#16a34a,stroke:#15803d,stroke-width:1.5px,color:#ffffff,font-weight:bold;
+    classDef infraStyle fill:#581c87,stroke:#4a044e,stroke-width:1.5px,color:#ffffff,font-weight:bold;
+    classDef extStyle fill:#b45309,stroke:#78350f,stroke-width:1.5px,color:#ffffff,font-weight:bold;
+    classDef ccStyle fill:#be123c,stroke:#9f1239,stroke-width:1.5px,color:#ffffff,font-weight:bold;
 
-    Start([Start]):::startEnd --> Reg[Patient Registration<br/>- Register/Retrieve UHID<br/>- Generate OPD Token<br/>- Select Dept & Priority]:::step
-    Reg --> Consult[Doctor Consultation<br/>- View Prioritized Queue<br/>- Record Vitals & Diagnosis]:::step
-    Consult --> Dec{Decision}:::decision
+    %% --- Users Layer ---
+    subgraph Users [Users Layer]
+        Patient[Patient]:::userStyle
+        Receptionist[Receptionist]:::userStyle
+        Doctor[Doctor]:::userStyle
+        Nurse[Nurse]:::userStyle
+        Pharmacist[Pharmacist]:::userStyle
+        Admin[Hospital Admin]:::userStyle
+    end
 
-    Dec -->|Outpatient| Pharm[Pharmacy<br/>- Retrieve Prescription<br/>- Dispense Medicines<br/>- Update Inventory]:::blueStep
-    Pharm --> EndOut([End]):::startEnd
+    %% --- Frontend Layer ---
+    subgraph Frontend [Frontend Layer - React + Vite + Tailwind CSS]
+        direction TB
+        Auth_FE[Authentication]:::feStyle
+        Dashboard_FE[Role-Based Dashboard]:::feStyle
+        Reg_FE[Patient Registration]:::feStyle
+        OPD_FE[OPD Queue Dashboard]:::feStyle
+        Doctor_FE[Doctor Dashboard]:::feStyle
+        EMR_FE[EMR]:::feStyle
+        Bed_FE[Bed Management]:::feStyle
+        Ward_FE[Ward Management]:::feStyle
+        Admit_FE[Admission & Discharge]:::feStyle
+        Transfer_FE[Transfer Management]:::feStyle
+        Inv_FE[Inventory Management]:::feStyle
+        Pharm_FE[Pharmacy Management]:::feStyle
+        Notif_FE[Notification Center]:::feStyle
+        Reports_FE[Reports & Analytics]:::feStyle
+    end
 
-    Dec -->|Inpatient| BedAlloc[Bed Allocation<br/>- View Available Beds<br/>- Assign Bed using UHID]:::step
-    BedAlloc --> Care[Inpatient Care<br/>- Administer Treatment<br/>- Transfer Ward Bed if needed]:::step
-    Care --> Discharge[Discharge Process<br/>- Discharge Patient<br/>- Bed Sanitization Loop]:::step
-    Discharge --> EndIn([End]):::startEnd
+    %% --- API Gateway ---
+    subgraph Gateway [API Gateway]
+        REST_API[REST API Requests]:::gatewayStyle
+        Auth_MW[Auth Middleware]:::gatewayStyle
+        Validation_MW[Validation & Rate Limiting]:::gatewayStyle
+        Routing_MW[Routing]:::gatewayStyle
+    end
+
+    %% --- Backend Services ---
+    subgraph Backend [Backend Services - Node.js + Express]
+        direction TB
+        Auth_Svc[Authentication Svc]:::beStyle
+        User_Svc[User Management Svc]:::beStyle
+        Patient_Svc[Patient Management Svc]:::beStyle
+        OPD_Svc[OPD Queue Svc]:::beStyle
+        Consult_Svc[Doctor Consultation Svc]:::beStyle
+        EMR_Svc[EMR Svc]:::beStyle
+        Bed_Svc[Bed Management Svc]:::beStyle
+        Admit_Svc[Admission Svc]:::beStyle
+        Pharm_Svc[Pharmacy Svc]:::beStyle
+        Inv_Svc[Inventory Svc]:::beStyle
+        Notif_Svc[Notification Svc]:::beStyle
+        Analytics_Svc[Analytics Svc]:::beStyle
+        Report_Svc[Report Generation Svc]:::beStyle
+        Audit_Svc[Audit Log Svc]:::beStyle
+    end
+
+    %% --- Real-Time Layer ---
+    subgraph RealTime [Real-Time Communication Layer]
+        SocketIO[Socket.IO Server]:::rtStyle
+        Live_Queue[Live Queue updates]:::rtStyle
+        Live_Bed[Live Bed Board]:::rtStyle
+        Live_Inv[Live Inventory]:::rtStyle
+        Live_Notif[Live Notifications]:::rtStyle
+    end
+
+    %% --- Database Layer ---
+    subgraph Database [Database Layer - MongoDB / PostgreSQL]
+        direction TB
+        Coll_Users[(Users)]:::dbStyle
+        Coll_Patients[(Patients)]:::dbStyle
+        Coll_Doctors[(Doctors)]:::dbStyle
+        Coll_Depts[(Departments)]:::dbStyle
+        Coll_Beds[(Beds)]:::dbStyle
+        Coll_Wards[(Wards)]:::dbStyle
+        Coll_Admit[(Admissions)]:::dbStyle
+        Coll_Transfers[(Transfers)]:::dbStyle
+        Coll_Records[(Medical Records)]:::dbStyle
+        Coll_Appts[(Appointments)]:::dbStyle
+        Coll_OPD[(OPD Queue)]:::dbStyle
+        Coll_Consults[(Consultations)]:::dbStyle
+        Coll_Meds[(Medicines)]:::dbStyle
+        Coll_Inventory[(Inventory)]:::dbStyle
+        Coll_Notif[(Notifications)]:::dbStyle
+        Coll_Reports[(Reports)]:::dbStyle
+    end
+
+    %% --- Infrastructure Layer ---
+    subgraph Infrastructure [Infrastructure Layer]
+        direction LR
+        JWT_Auth[JWT Auth]:::infraStyle
+        RBAC_Auth[RBAC Security]:::infraStyle
+        Cloud_Store[Cloud Storage]:::infraStyle
+        File_Upload[File Upload]:::infraStyle
+        SMS_Gate[SMS Gateway]:::infraStyle
+        Email_Gate[Email Gateway]:::infraStyle
+        Logging[Logging & Monitoring]:::infraStyle
+        Backup[Backup & Recovery]:::infraStyle
+        Env_Vars[Env Variables]:::infraStyle
+        HTTPS_Sec[HTTPS]:::infraStyle
+        API_Sec[API Security]:::infraStyle
+    end
+
+    %% --- External Integrations ---
+    subgraph Integrations [External Integrations]
+        direction LR
+        Gov_Health[Gov Health APIs]:::extStyle
+        City_Net[City Hospital Net]:::extStyle
+        LIS_Int[LIS Laboratory]:::extStyle
+        PACS_Int[RIS / PACS Radiology]:::extStyle
+        Insurance_Int[Insurance APIs]:::extStyle
+        Payment_Int[Payment Gateway]:::extStyle
+        AI_Engine[AI Prediction]:::extStyle
+        IoT_Beds[IoT Smart Beds]:::extStyle
+        Ambulance[Ambulance Tracking]:::extStyle
+        HL7[FHIR / HL7]:::extStyle
+        Cloud_Svc[Cloud Services]:::extStyle
+    end
+
+    %% --- Cross-Cutting Features ---
+    subgraph CrossCutting [Cross-Cutting Features]
+        direction LR
+        Secure_Auth[Secure Authentication]:::ccStyle
+        Authorization[Authorization]:::ccStyle
+        Audit_Log[Audit Logging]:::ccStyle
+        Notif_Engine[Notification Engine]:::ccStyle
+        RT_Sync[Real-Time Sync]:::ccStyle
+        Analytics[Analytics]:::ccStyle
+        Scalability[Scalability]:::ccStyle
+        Cloud_Ready[Cloud Ready]:::ccStyle
+        Fault_Tol[Fault Tolerance]:::ccStyle
+    end
+
+    %% --- Connections ---
+    Users --> Frontend
+    Frontend --> REST_API
+    REST_API --> Auth_MW
+    Auth_MW --> Validation_MW
+    Validation_MW --> Routing_MW
+    Routing_MW --> Backend
+    Backend --> Database
+
+    %% Real-time Socket sync
+    Backend <--> SocketIO
+    SocketIO <--> Frontend
+    SocketIO --- Live_Queue & Live_Bed & Live_Inv & Live_Notif
+
+    %% Infrastructure & Integrations
+    Infrastructure --> Backend
+    Integrations --> Backend
+    CrossCutting -.-> Backend
 ```
 
 ### Workflow Steps
