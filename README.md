@@ -42,9 +42,70 @@
 
 ## 🔄 System Architecture & Workflow
 
-<p align="center">
-  <img src="https://app.eraser.io/workspace/rIofOylP7UC4Bf31sh2q/preview?diagram=UFR2IaLm-201LThOsy6B&format=svg&theme=light" alt="iSHRMS System Architecture" width="100%" />
-</p>
+```mermaid
+graph TD
+    %% Custom Styling - High-contrast colors optimized for Light & Dark modes
+    classDef client fill:#3b82f6,stroke:#1d4ed8,stroke-width:2px,color:#ffffff,font-weight:bold;
+    classDef gate fill:#06b6d4,stroke:#0891b2,stroke-width:2px,color:#ffffff,font-weight:bold;
+    classDef service fill:#6366f1,stroke:#4f46e5,stroke-width:2px,color:#ffffff,font-weight:bold;
+    classDef pipeline fill:#ef4444,stroke:#dc2626,stroke-width:2px,color:#ffffff,font-weight:bold;
+    classDef database fill:#f59e0b,stroke:#d97706,stroke-width:2px,color:#ffffff,font-weight:bold;
+
+    %% 1. CLIENT LAYER
+    subgraph ClientLayer [I. CLIENT PORTALS & USER ROLES]
+        direction LR
+        AdminPanel[Admin Portal]:::client
+        DoctorConsole[Doctor Portal]:::client
+        NurseStation[Nurse Station]:::client
+        ReceptionDesk[Reception Desk]:::client
+        PharmacyRegistry[Pharmacy Desk]:::client
+    end
+
+    %% 2. REAL-TIME INTERACTION LAYER
+    subgraph SyncLayer [II. REAL-TIME INTERACTION GATEWAY]
+        direction LR
+        WS[Socket.io Real-Time Telemetry]:::gate
+        TTS[Speech Synthesis Queue Caller]:::gate
+        PushNotify[Dynamic Topbar Notifications]:::gate
+    end
+
+    %% 3. BUSINESS LOGIC LAYER
+    subgraph ServiceLayer [III. APPLICATION BUSINESS SERVICES]
+        direction TB
+        AuthServ[Auth & RBAC Middleware]:::service
+        PatientServ[Patient Directory Service]:::service
+        OPDServ[OPD Queue & Vitals Service]:::service
+        BedServ[Inpatient Bed Board Sensor Sync]:::service
+        InventoryServ[Pharmacy Stock & Expiry Manager]:::service
+    end
+
+    %% 4. PIPELINE LAYER
+    subgraph PipelineLayer [IV. AUDIT & ESCALATION PIPELINES]
+        direction LR
+        AuditTrail[Traceable System Audit Logs]:::pipeline
+        AlertEscalation[Low Stock & Expiry Warnings]:::pipeline
+    end
+
+    %% 5. DATA PERSISTENCE LAYER
+    subgraph DatabaseLayer [V. CENTRALIZED PERSISTENCE LAYER]
+        direction LR
+        Postgres[(PostgreSQL Relational DB)]:::database
+        PrismaORM[Prisma Schema Model Engine]:::database
+    end
+
+    %% Flow/Architecture Connections
+    ClientLayer --> SyncLayer
+    SyncLayer --> ServiceLayer
+    ServiceLayer --> PipelineLayer
+    PipelineLayer --> DatabaseLayer
+
+    %% Styling parent subgraphs
+    style ClientLayer fill:#f8fafc,stroke:#cbd5e1,stroke-width:2px;
+    style SyncLayer fill:#f8fafc,stroke:#cbd5e1,stroke-width:2px;
+    style ServiceLayer fill:#f8fafc,stroke:#cbd5e1,stroke-width:2px;
+    style PipelineLayer fill:#f8fafc,stroke:#cbd5e1,stroke-width:2px;
+    style DatabaseLayer fill:#f8fafc,stroke:#cbd5e1,stroke-width:2px;
+```
 
 ### Workflow Steps
 
