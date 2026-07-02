@@ -43,8 +43,31 @@
 ## 🔄 System Architecture & Workflow
 
 <p align="center">
-  <img src="./assets/architecture.png" alt="iSHRMS System Architecture" width="75%" />
+  <img src="./assets/architecture.png" alt="iSHRMS System Architecture" width="70%" />
 </p>
+
+### 🔄 Patient Consultation & Admission Workflow
+
+```mermaid
+graph TD
+    %% Styling - Professional Clean Blue Accents
+    classDef startEnd fill:#eff6ff,stroke:#3b82f6,stroke-width:1.5px,color:#1e3a8a;
+    classDef step fill:#ffffff,stroke:#94a3b8,stroke-width:1px,color:#334155;
+    classDef decision fill:#eff6ff,stroke:#2563eb,stroke-width:1.5px,color:#1e3a8a;
+    classDef blueStep fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#1e3a8a;
+
+    Start([Start]):::startEnd --> Reg[Patient Registration<br/>- Register/Retrieve UHID<br/>- Generate OPD Token<br/>- Select Dept & Priority]:::step
+    Reg --> Consult[Doctor Consultation<br/>- View Prioritized Queue<br/>- Record Vitals & Diagnosis]:::step
+    Consult --> Dec{Decision}:::decision
+
+    Dec -->|Outpatient| Pharm[Pharmacy<br/>- Retrieve Prescription<br/>- Dispense Medicines<br/>- Update Inventory]:::blueStep
+    Pharm --> EndOut([End]):::startEnd
+
+    Dec -->|Inpatient| BedAlloc[Bed Allocation<br/>- View Available Beds<br/>- Assign Bed using UHID]:::step
+    BedAlloc --> Care[Inpatient Care<br/>- Administer Treatment<br/>- Transfer Ward Bed if needed]:::step
+    Care --> Discharge[Discharge Process<br/>- Discharge Patient<br/>- Bed Sanitization Loop]:::step
+    Discharge --> EndIn([End]):::startEnd
+```
 
 ### Workflow Steps
 
