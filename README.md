@@ -44,30 +44,67 @@
 
 ```mermaid
 graph TD
-    %% Custom Node Styling for Light & Dark Mode visibility
-    classDef actor fill:#2563eb,stroke:#1d4ed8,stroke-width:2px,color:#ffffff;
-    classDef workflow fill:#059669,stroke:#047857,stroke-width:2px,color:#ffffff;
-    classDef service fill:#4f46e5,stroke:#4338ca,stroke-width:2px,color:#ffffff;
-    classDef db fill:#ea580c,stroke:#b45309,stroke-width:2px,color:#ffffff;
-    classDef alert fill:#dc2626,stroke:#b91c1c,stroke-width:2px,color:#ffffff;
+    %% Custom Styling - High-contrast colors optimized for Light & Dark modes
+    classDef client fill:#3b82f6,stroke:#1d4ed8,stroke-width:2px,color:#ffffff,font-weight:bold;
+    classDef gate fill:#06b6d4,stroke:#0891b2,stroke-width:2px,color:#ffffff,font-weight:bold;
+    classDef service fill:#6366f1,stroke:#4f46e5,stroke-width:2px,color:#ffffff,font-weight:bold;
+    classDef pipeline fill:#ef4444,stroke:#dc2626,stroke-width:2px,color:#ffffff,font-weight:bold;
+    classDef database fill:#f59e0b,stroke:#d97706,stroke-width:2px,color:#ffffff,font-weight:bold;
 
-    A[Receptionist: Patient Registration & OPD Token]:::workflow --> B{OPD Case Priority}:::workflow
-    
-    B -->|Normal Queue| C[Doctor: Consultation & Diagnosis]:::workflow
-    B -->|Emergency Escalation| D[Immediate Critical Care]:::alert
-    
-    C & D --> E{Inpatient Admission Ordered?}:::workflow
-    
-    E -->|Yes| F[Ward Management: Bed Allocation & Transfer]:::workflow
-    E -->|No| G[Pharmacy Dispatch: Prescription Issued]:::workflow
-    
-    F --> H[Sanitization Loop: Bed Cleaning & Release]:::workflow
-    G --> I[Pharmacist: Dispense Medicine & Inventory Sync]:::workflow
+    %% 1. CLIENT LAYER
+    subgraph ClientLayer [I. CLIENT PORTALS & USER ROLES]
+        direction LR
+        AdminPanel[Admin Portal]:::client
+        DoctorConsole[Doctor Portal]:::client
+        NurseStation[Nurse Station]:::client
+        ReceptionDesk[Reception Desk]:::client
+        PharmacyRegistry[Pharmacy Desk]:::client
+    end
 
-    %% System Architecture Layers
-    H & I -.-> J[iSHRMS API Microservices]:::service
-    J -.-> K[(PostgreSQL Central Database)]:::db
-    J -.-> L[Real-time WebSocket & TTS Engines]:::service
+    %% 2. REAL-TIME INTERACTION LAYER
+    subgraph SyncLayer [II. REAL-TIME INTERACTION GATEWAY]
+        direction LR
+        WS[Socket.io Real-Time Telemetry]:::gate
+        TTS[Speech Synthesis Queue Caller]:::gate
+        PushNotify[Dynamic Topbar Notifications]:::gate
+    end
+
+    %% 3. BUSINESS LOGIC LAYER
+    subgraph ServiceLayer [III. APPLICATION BUSINESS SERVICES]
+        direction TB
+        AuthServ[Auth & RBAC Middleware]:::service
+        PatientServ[Patient Directory Service]:::service
+        OPDServ[OPD Queue & Vitals Service]:::service
+        BedServ[Inpatient Bed Board Sensor Sync]:::service
+        InventoryServ[Pharmacy Stock & Expiry Manager]:::service
+    end
+
+    %% 4. PIPELINE LAYER
+    subgraph PipelineLayer [IV. AUDIT & ESCALATION PIPELINES]
+        direction LR
+        AuditTrail[Traceable System Audit Logs]:::pipeline
+        AlertEscalation[Low Stock & Expiry Warnings]:::pipeline
+    end
+
+    %% 5. DATA PERSISTENCE LAYER
+    subgraph DatabaseLayer [V. CENTRALIZED PERSISTENCE LAYER]
+        direction LR
+        Postgres[(PostgreSQL Relational DB)]:::database
+        PrismaORM[Prisma Schema Model Engine]:::database
+    end
+
+    %% Flow/Architecture Connections
+    ClientLayer --> SyncLayer
+    SyncLayer --> ServiceLayer
+    ServiceLayer --> PipelineLayer
+    PipelineLayer --> DatabaseLayer
+
+    %% Styling parent subgraphs
+    style ClientLayer fill:#f8fafc,stroke:#cbd5e1,stroke-width:2px;
+    style SyncLayer fill:#f8fafc,stroke:#cbd5e1,stroke-width:2px;
+    style ServiceLayer fill:#f8fafc,stroke:#cbd5e1,stroke-width:2px;
+    style PipelineLayer fill:#f8fafc,stroke:#cbd5e1,stroke-width:2px;
+    style DatabaseLayer fill:#f8fafc,stroke:#cbd5e1,stroke-width:2px;
 ```
 
 ### Workflow Steps
