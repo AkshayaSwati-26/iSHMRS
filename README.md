@@ -41,13 +41,6 @@
 ---
 
 ## 🔄 System Architecture & Workflow
-
-<p align="center">
-  <img src="./assets/architecture.png" alt="iSHRMS System Architecture" width="70%" />
-</p>
-
-### 🔄 Patient Consultation & Admission Workflow
-
 ```mermaid
 graph TD
     %% Styling - Professional Clean Blue Accents
