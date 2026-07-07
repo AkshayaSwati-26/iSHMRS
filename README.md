@@ -131,31 +131,27 @@ iSHRMS/
 
 ---
 
-## 🔌 Key REST API Endpoints
+## 🔌 API & Real-Time Sync (REST & WebSockets)
 
-| Endpoint | Method | Role Allowed | Description |
-| :--- | :--- | :--- | :--- |
-| `/api/auth/login` | `POST` | Public | Authenticates user & returns JWT tokens |
-| `/api/auth/refresh` | `POST` | Public | Refreshes expired JWT session tokens |
-| `/api/patients` | `GET` / `POST` | Receptionist, Nurse, Doctor | Retrieve patients list or register new patient |
-| `/api/opd/tokens` | `GET` / `POST` | Doctor, Receptionist | Manage OPD doctor queue and priority tokens |
-| `/api/beds` | `GET` / `PUT` | Nurse, Receptionist, Admin | Retrieve bed layouts, assign beds, update status |
-| `/api/admissions` | `GET` / `POST` | Nurse, Receptionist, Doctor | Create inpatient admissions & process discharges |
-| `/api/medicines` | `GET` / `POST` | Pharmacist, Admin | View medicine inventory levels, log stock transactions |
-| `/api/city/occupancy` | `GET` | Super Admin, Admin | Real-time bed occupancy stats across the city network |
-| `/api/alerts` | `GET` / `PUT` | Admin, Nurse, Pharmacist | Manage system alert notifications (critical beds, low stock) |
+The client and server communicate via a secure REST API (JWT/RBAC protected) alongside a bidirectional Socket.io event loop:
 
----
+```mermaid
+graph LR
+    classDef client fill:#2563eb,stroke:#1d4ed8,stroke-width:1.5px,color:#ffffff;
+    classDef server fill:#0d9488,stroke:#0f766e,stroke-width:1.5px,color:#ffffff;
+    classDef db fill:#4f46e5,stroke:#3730a3,stroke-width:1.5px,color:#ffffff;
 
-## ⚡ Real-Time Socket.io Events
+    React[💻 React Frontend]:::client
+    Express[⚙️ Express Backend]:::server
+    DB[(🗄️ PostgreSQL)]:::db
 
-| Event Name | Direction | Payload | Description |
-| :--- | :--- | :--- | :--- |
-| `join_hospital` | Client ➔ Server | `{ hospitalId }` | Rooms user client into hospital-specific socket broadcasts |
-| `bed_status_updated`| Server ➔ Client | `{ bedId, status, label }` | Broadcasts real-time bed occupancy or cleaning changes |
-| `queue_updated` | Server ➔ Client | `{ departmentId, queueLength }` | Updates waiting room OPD lists instantly |
-| `token_called` | Server ➔ Client | `{ tokenNumber, department, doctor }` | Triggers Text-to-Speech client waiting room announcement |
-| `system_alert` | Server ➔ Client | `{ type, message, severity }` | Pushes instant warning toasts for low stock or emergencies |
+    React -->|REST API: JWT Auth, Intake, Rx, Inventory| Express
+    React <-->|Socket.io: Live Bed occupancy & OPD Queue Sync| Express
+    Express <-->|Prisma ORM| DB
+```
+
+- **REST Interface**: Governs secure state mutations and queries: Authentication (`/auth`), Patient Registration (`/patients`), OPD Tokens (`/opd`), Ward Bed Allocation (`/beds`), Admissions/Discharges (`/admissions`), Pharmacy logs (`/medicines`), and City Metrics (`/city`).
+- **Socket.io Sync**: Broadcasts live updates across hospital client views: Bed board state changes (`bed_status_updated`), Patient queue changes (`queue_updated`), Doctor TTS token calls (`token_called`), and system warnings (`system_alert`).
 
 ---
 
