@@ -42,23 +42,24 @@
 
 ## 🔄 System Architecture & Workflow
 ```mermaid
-graph TD
-    %% Styling - Professional Clean Blue Accents
-    classDef startEnd fill:#eff6ff,stroke:#3b82f6,stroke-width:1.5px,color:#1e3a8a;
-    classDef step fill:#ffffff,stroke:#94a3b8,stroke-width:1px,color:#334155;
-    classDef decision fill:#eff6ff,stroke:#2563eb,stroke-width:1.5px,color:#1e3a8a;
-    classDef blueStep fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#1e3a8a;
+graph LR
+    %% Custom filled styles matching iSHRMS dashboard colors
+    classDef startEnd fill:#2563eb,stroke:#1d4ed8,stroke-width:2px,color:#ffffff,font-weight:bold;
+    classDef step fill:#0d9488,stroke:#0f766e,stroke-width:1.5px,color:#ffffff;
+    classDef decision fill:#e11d48,stroke:#be123c,stroke-width:2px,color:#ffffff,font-weight:bold;
+    classDef inpatient fill:#ea580c,stroke:#c2410c,stroke-width:1.5px,color:#ffffff;
+    classDef outpatient fill:#4f46e5,stroke:#3730a3,stroke-width:1.5px,color:#ffffff;
 
     Start([Start]):::startEnd --> Reg[Patient Registration<br/>- Register/Retrieve UHID<br/>- Generate OPD Token<br/>- Select Dept & Priority]:::step
     Reg --> Consult[Doctor Consultation<br/>- View Prioritized Queue<br/>- Record Vitals & Diagnosis]:::step
     Consult --> Dec{Decision}:::decision
 
-    Dec -->|Outpatient| Pharm[Pharmacy<br/>- Retrieve Prescription<br/>- Dispense Medicines<br/>- Update Inventory]:::blueStep
+    Dec -->|Outpatient| Pharm[Pharmacy<br/>- Retrieve Prescription<br/>- Dispense Medicines<br/>- Update Inventory]:::outpatient
     Pharm --> EndOut([End]):::startEnd
 
-    Dec -->|Inpatient| BedAlloc[Bed Allocation<br/>- View Available Beds<br/>- Assign Bed using UHID]:::step
-    BedAlloc --> Care[Inpatient Care<br/>- Administer Treatment<br/>- Transfer Ward Bed if needed]:::step
-    Care --> Discharge[Discharge Process<br/>- Discharge Patient<br/>- Bed Sanitization Loop]:::step
+    Dec -->|Inpatient| BedAlloc[Bed Allocation<br/>- View Available Beds<br/>- Assign Bed using UHID]:::inpatient
+    BedAlloc --> Care[Inpatient Care<br/>- Administer Treatment<br/>- Transfer Ward Bed if needed]:::inpatient
+    Care --> Discharge[Discharge Process<br/>- Discharge Patient<br/>- Bed Sanitization Loop]:::inpatient
     Discharge --> EndIn([End]):::startEnd
 ```
 
@@ -94,13 +95,99 @@ graph TD
 
 ---
 
-## 🚀 How to Run Locally
+## 📂 Repository Directory Structure
 
-### Prerequisites
+```text
+iSHRMS/
+├── assets/                    # Static assets
+├── docker-compose.yml         # Multi-container Docker orchestration config
+├── README.md                  # Project documentation
+├── ishms-backend/             # Express.js REST & Real-time Socket.io server
+│   ├── prisma/                # Prisma ORM schema, migrations, and seed scripts
+│   └── src/                   # Backend application source code
+│       ├── controllers/       # Route request handlers
+│       ├── middlewares/       # Request interceptors (JWT auth, RBAC validation)
+│       └── routes/            # REST API endpoint route definitions
+└── ishms-frontend/            # React (Vite) client web application
+    ├── public/                # Static public assets
+    └── src/                   # Client application source code
+        ├── components/        # Reusable UI widgets & dashboard charts
+        ├── context/           # React context providers (Auth context, Socket state)
+        └── pages/             # Dynamic dashboard views for various roles
+```
+
+---
+
+## 🔑 Role-Based Access Control (RBAC) Matrix
+
+| Role | Dashboard View | Key Capabilities |
+| :--- | :--- | :--- |
+| **Super Admin** | Multi-Hospital Global View | Manage multiple hospital clusters, compare occupancy/shortages, view audit logs |
+| **Admin** | Hospital Management | Configure departments, beds, view analytics, manage personnel, handle inventory |
+| **Doctor** | Consultation Dashboard | View OPD queues, update patient vitals & diagnostics, write prescriptions, order admissions |
+| **Nurse** | Ward Bed Board | Monitor bed/sensor status, assign patients to beds, request transfers, discharge inpatients |
+| **Receptionist**| Patient Intake & Bed Booking | Register patients, generate priority-based OPD tokens, allocate beds |
+| **Pharmacist** | Inventory & Dispensation | Dispense medicine by UHID, manage stock transactions, check low stock & expiry |
+
+---
+
+## 🔌 Key REST API Endpoints
+
+| Endpoint | Method | Role Allowed | Description |
+| :--- | :--- | :--- | :--- |
+| `/api/auth/login` | `POST` | Public | Authenticates user & returns JWT tokens |
+| `/api/auth/refresh` | `POST` | Public | Refreshes expired JWT session tokens |
+| `/api/patients` | `GET` / `POST` | Receptionist, Nurse, Doctor | Retrieve patients list or register new patient |
+| `/api/opd/tokens` | `GET` / `POST` | Doctor, Receptionist | Manage OPD doctor queue and priority tokens |
+| `/api/beds` | `GET` / `PUT` | Nurse, Receptionist, Admin | Retrieve bed layouts, assign beds, update status |
+| `/api/admissions` | `GET` / `POST` | Nurse, Receptionist, Doctor | Create inpatient admissions & process discharges |
+| `/api/medicines` | `GET` / `POST` | Pharmacist, Admin | View medicine inventory levels, log stock transactions |
+| `/api/city/occupancy` | `GET` | Super Admin, Admin | Real-time bed occupancy stats across the city network |
+| `/api/alerts` | `GET` / `PUT` | Admin, Nurse, Pharmacist | Manage system alert notifications (critical beds, low stock) |
+
+---
+
+## ⚡ Real-Time Socket.io Events
+
+| Event Name | Direction | Payload | Description |
+| :--- | :--- | :--- | :--- |
+| `join_hospital` | Client ➔ Server | `{ hospitalId }` | Rooms user client into hospital-specific socket broadcasts |
+| `bed_status_updated`| Server ➔ Client | `{ bedId, status, label }` | Broadcasts real-time bed occupancy or cleaning changes |
+| `queue_updated` | Server ➔ Client | `{ departmentId, queueLength }` | Updates waiting room OPD lists instantly |
+| `token_called` | Server ➔ Client | `{ tokenNumber, department, doctor }` | Triggers Text-to-Speech client waiting room announcement |
+| `system_alert` | Server ➔ Client | `{ type, message, severity }` | Pushes instant warning toasts for low stock or emergencies |
+
+---
+
+## 🚀 How to Run & Deploy
+
+### Option A: Using Docker Compose (Recommended - Quickest Setup)
+
+To build and run the entire multi-container stack (PostgreSQL, Express Backend, and Vite Frontend) in a single command:
+
+1. Clone the repository and navigate to the project root:
+   ```bash
+   git clone https://github.com/AkshayaSwati-26/iSHRMS.git
+   cd iSHRMS
+   ```
+2. Build and run the containers in detached mode:
+   ```bash
+   docker-compose up --build -d
+   ```
+3. Once initialized, the services will be running at:
+   - **Frontend App**: [http://localhost:3000](http://localhost:3000)
+   - **Backend REST API**: [http://localhost:5000/api](http://localhost:5000/api)
+   - **Database (PostgreSQL)**: Port `5435` (mapped to container port `5432`)
+
+---
+
+### Option B: Local Manual Setup
+
+#### Prerequisites
 - Node.js (v18+)
 - PostgreSQL database
 
-### 1. Database Setup
+#### 1. Database Setup
 Ensure PostgreSQL is running and update the `.env` database connection string in `ishms-backend/.env`. Run the migrations and seed data:
 ```bash
 cd ishms-backend
@@ -110,7 +197,7 @@ node prisma/seed.js
 npm run dev
 ```
 
-### 2. Frontend Setup
+#### 2. Frontend Setup
 ```bash
 cd ishms-frontend
 npm install
