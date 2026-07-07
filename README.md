@@ -145,8 +145,8 @@ graph LR
     Express[⚙️ Express Backend]:::server
     DB[(🗄️ PostgreSQL)]:::db
 
-    React -->|REST API: JWT Auth, Intake, Rx, Inventory| Express
-    React <-->|Socket.io: Live Bed occupancy & OPD Queue Sync| Express
+    React -->|REST API:<br/>JWT Auth, Intake, Rx, Inventory| Express
+    React <-->|Socket.io:<br/>Live Bed occupancy & OPD Queue Sync| Express
     Express <-->|Prisma ORM| DB
 ```
 
