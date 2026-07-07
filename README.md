@@ -102,13 +102,13 @@ iSHRMS/
 ├── assets/                    # Static assets
 ├── docker-compose.yml         # Multi-container Docker orchestration config
 ├── README.md                  # Project documentation
-├── ishms-backend/             # Express.js REST & Real-time Socket.io server
+├── backend/                   # Express.js REST & Real-time Socket.io server
 │   ├── prisma/                # Prisma ORM schema, migrations, and seed scripts
 │   └── src/                   # Backend application source code
 │       ├── controllers/       # Route request handlers
 │       ├── middlewares/       # Request interceptors (JWT auth, RBAC validation)
 │       └── routes/            # REST API endpoint route definitions
-└── ishms-frontend/            # React (Vite) client web application
+└── frontend/                  # React (Vite) client web application
     ├── public/                # Static public assets
     └── src/                   # Client application source code
         ├── components/        # Reusable UI widgets & dashboard charts
@@ -184,9 +184,9 @@ To build and run the entire multi-container stack (PostgreSQL, Express Backend, 
 - PostgreSQL database
 
 #### 1. Database Setup
-Ensure PostgreSQL is running and update the `.env` database connection string in `ishms-backend/.env`. Run the migrations and seed data:
+Ensure PostgreSQL is running and update the `.env` database connection string in `backend/.env`. Run the migrations and seed data:
 ```bash
-cd ishms-backend
+cd backend
 npm install
 npx prisma migrate dev
 node prisma/seed.js
@@ -195,7 +195,7 @@ npm run dev
 
 #### 2. Frontend Setup
 ```bash
-cd ishms-frontend
+cd frontend
 npm install
 npm run dev
 ```

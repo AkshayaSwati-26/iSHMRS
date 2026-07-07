@@ -16,7 +16,7 @@ services:
 
   backend:
     build:
-      context: ./ishms-backend
+      context: ./backend
       dockerfile: Dockerfile
     container_name: ishrms-backend
     restart: always
@@ -37,7 +37,7 @@ services:
 
   frontend:
     build:
-      context: ./ishms-frontend
+      context: ./frontend
       dockerfile: Dockerfile
       args:
         - VITE_API_URL=http://localhost:5000/api
