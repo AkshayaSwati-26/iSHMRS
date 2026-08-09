@@ -29,23 +29,24 @@
 
 ---
 
-## 🏥 Core Modules & Main Features
+## 🏥 Core Modules & Feature Architecture
 
-* **🔐 Role Security (RBAC)**: Custom logins, session guarding (JWT), and redirection to role-specific dashboards for **Super Admins, Admins, Doctors, Nurses, Receptionists, Pharmacists, and Patients**.
-* **👤 Patient Portal (`PATIENT` Role)**: Features hybrid account claiming (3-factor verification) or self-registration, real-time OPD token queue tracker, appointment booking, digital prescription PDF printing, vitals charts, symptom diary, document vault, and care feedback.
-* **🤖 AI Intelligence (Google Gemini 1.5)**: AI pre-triage symptom checker, doctor CDSS co-pilot (ICD-10 differential diagnoses), pharmacist drug interaction matrix, and conversational NLP staff chatbot.
-* **💰 Billing & Invoicing**: Generates itemized OPD & IPD GST invoices ($N \text{ Days} \times \text{Bed Charge} + \text{Procedures}$), tracks multi-method payments (Cash, UPI, Card, Insurance), and provides live revenue analytics.
-* **🧪 Lab & Diagnostics**: Complete lab order workflow (Doctor requisition $\rightarrow$ Sample Collection $\rightarrow$ Result Entry) with real-time Socket.io STAT & critical value emergency alerts.
-* **🏙️ City-Wide Network (City Dashboard)**: Connects and compares multiple hospitals in real time to balance patient loads, monitor bed occupancy, and alert cities of critical resource shortages.
-* **📋 Real-Time Bed Board**: A visual map of ward beds displaying sensor states: **Available** (green), **Occupied** (red), **Cleaning** (purple), or **Maintenance** (yellow). Supports instant bed allocation and ward transfers.
-* **🩺 Smart OPD Queue**: Prioritizes patient tokens based on clinical severity: **Emergency** (immediate), **High Priority** (Senior Citizen/Pregnancy), or **Normal**.
-* **💊 Pharmacy Tracker**: Tracks drug stock levels, gives low-stock/expiry warnings, and features a dedicated **Dispense Form** to log transactions and patient history.
-* **🔔 Live Notifications**: An animated dropdown panel in the top bar showing instant clinical alerts, low stock warnings, and quick-resolve buttons.
-* **📊 Interactive Dashboard**: Live analytics widgets representing patient footfall trends, OPD severity distributions, department loadings, and weekly available bed census trends.
-* **📝 Audit Logs**: Records every critical system activity with the active user, transaction type, IP address, and timestamp for complete traceability.
-* **📅 Doctor Appointment Scheduler**: Real-time appointment booking calendar with automatic double-booking prevention.
-* **🔊 Live Waiting Room Caller (TTS)**: Automatically announces patient tokens using Text-to-Speech (TTS) when doctors call the next patient.
-* **🛡️ Super Admin Global Access**: Enables Super Admins to securely manage multiple hospitals through intelligent backend context handling.
+| Category | Module / Feature | Key Functionality & Capabilities |
+| :--- | :--- | :--- |
+| **Security & Access** | **🔐 Role Security (RBAC)** | Custom JWT authentication, role guards, and dynamic dashboards for 7 RBAC roles. |
+| | **🛡️ Super Admin Global** | Centralized multi-hospital cluster management with context-aware analytics. |
+| **Patient Ecosystem** | **👤 Patient Portal** | Hybrid 3-factor UHID claim / self-reg, live queue tracker, prescr. PDF, vitals charts & document vault. |
+| | **📅 Doctor Scheduler** | Double-booking prevention calendar with automated slot management. |
+| **AI Intelligence** | **🤖 AI Intelligence Hub** | Gemini 1.5 powered pre-triage, CDSS doctor co-pilot (ICD-10), drug interactions & staff NLP chatbot. |
+| **Clinical Ops** | **🩺 Smart OPD Queue** | Severity triage (Emergency, Priority, Normal) & live Text-to-Speech (TTS) token announcer. |
+| | **📋 Real-Time Bed Board** | Interactive sensor-mapped ward beds (Available, Occupied, Cleaning, Maintenance). |
+| | **🧪 Lab & Diagnostics** | Order lifecycle (Requisition $\rightarrow$ Sample $\rightarrow$ Results) with real-time Socket.io STAT/critical alerts. |
+| **Finance & Pharmacy**| **💰 Billing & Invoicing** | Itemized OPD/IPD GST invoices ($N\text{ Days} \times \text{Bed Rate}$), multi-method payment & revenue stats. |
+| | **💊 Pharmacy Tracker** | Stock inventory management, low-stock/expiry alerts, and UHID prescription dispensing. |
+| **Analytics & Alerts**| **🏙️ City-Wide Network** | Real-time multi-hospital resource comparison, load balancing, and city shortage alerts. |
+| | **📊 Live Analytics** | Footfall charts, OPD severity breakdown, department load, and bed census telemetry. |
+| | **🔔 Clinical Alerts** | Instant topbar notification panel with one-click quick-resolve actions. |
+| | **📝 Audit Trail** | Immutable log of user actions, transactions, IP addresses, and timestamps for governance. |
 
 ---
 
