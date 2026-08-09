@@ -160,7 +160,18 @@ async function seedRichData() {
     await prisma.patient.update({ where: { id: mainPatient.id }, data: { isAdmitted: true } });
     console.log('✅ Inpatient admission initialized.');
 
-    // 8. OPD Queue Tokens
+    // 9. OPD Queue Tokens
+    const consultationToken = await prisma.oPDToken.create({
+      data: {
+        tokenNumber: 100,
+        patientId: mainPatient.id,
+        departmentId: depts['General Medicine'].id,
+        doctorId: users['doctor@ishrms.com'].id,
+        priority: 'Normal',
+        status: 'Completed'
+      }
+    });
+
     const opdTokens = [
       { tokenNumber: 101, patientId: mainPatient.id, departmentId: depts['General Medicine'].id, doctorId: users['doctor@ishrms.com'].id, priority: 'Normal', status: 'Waiting' },
       { tokenNumber: 102, patientId: patients['UHID-20260801-10002'].id, departmentId: depts['Cardiology'].id, doctorId: users['cardio.doc@ishrms.com'].id, priority: 'SeniorCitizen', status: 'Waiting' },
@@ -170,22 +181,12 @@ async function seedRichData() {
     for (const t of opdTokens) {
       await prisma.oPDToken.create({ data: t });
     }
-    console.log('✅ 3 OPD Tokens initialized.');
-
-    // 9. Appointments
-    const appointments = [
-      { patientId: mainPatient.id, doctorId: users['doctor@ishrms.com'].id, departmentId: depts['General Medicine'].id, appointmentDate: new Date(Date.now() + 24 * 3600 * 1000), timeSlot: '10:30 AM', status: 'Scheduled', notes: 'Routine checkup for BP and fatigue.' },
-      { patientId: patients['UHID-20260801-10001'].id, doctorId: users['cardio.doc@ishrms.com'].id, departmentId: depts['Cardiology'].id, appointmentDate: new Date(Date.now() + 48 * 3600 * 1000), timeSlot: '02:00 PM', status: 'Scheduled', notes: 'Echocardiogram review.' }
-    ];
-    for (const a of appointments) {
-      await prisma.appointment.create({ data: a });
-    }
-    console.log('✅ Appointments initialized.');
+    console.log('✅ OPD Tokens initialized.');
 
     // 10. Consultations & Prescriptions
     const consultation = await prisma.consultation.create({
       data: {
-        tokenId: (await prisma.oPDToken.findFirst()).id,
+        tokenId: consultationToken.id,
         patientId: mainPatient.id,
         doctorId: users['doctor@ishrms.com'].id,
         symptoms: 'Fever, cough, mild breathlessness for 3 days',
@@ -214,9 +215,25 @@ async function seedRichData() {
     }
     console.log('✅ Pharmacy Stock initialized.');
 
-    // 12. Lab Orders & Tests Results
-    const labTestCBC = await prisma.labTest.findFirst({ where: { code: 'CBC-01' } });
-    const labTestLFT = await prisma.labTest.findFirst({ where: { code: 'LFT-01' } });
+    // 12. Lab Tests Catalog & Orders
+    const standardTests = [
+      { code: 'CBC-01', name: 'Complete Blood Count (CBC)', category: 'Hematology', sampleType: 'Blood', referenceRange: 'Hb: 12-16 g/dL, WBC: 4000-11000', unit: 'g/dL', price: 450 },
+      { code: 'LFT-01', name: 'Liver Function Test (LFT)', category: 'Biochemistry', sampleType: 'Blood', referenceRange: 'Bilirubin: 0.3-1.2, SGOT: 10-40', unit: 'mg/dL', price: 850 },
+      { code: 'KFT-01', name: 'Kidney Function Test (KFT)', category: 'Biochemistry', sampleType: 'Blood', referenceRange: 'Urea: 15-45, Creatinine: 0.6-1.2', unit: 'mg/dL', price: 750 },
+      { code: 'LIP-01', name: 'Lipid Profile', category: 'Biochemistry', sampleType: 'Blood', referenceRange: 'Cholesterol: <200, Triglycerides: <150', unit: 'mg/dL', price: 900 }
+    ];
+
+    const labTestsMap = {};
+    for (const t of standardTests) {
+      labTestsMap[t.code] = await prisma.labTest.upsert({
+        where: { code: t.code },
+        update: {},
+        create: t
+      });
+    }
+
+    const labTestCBC = labTestsMap['CBC-01'];
+    const labTestLFT = labTestsMap['LFT-01'];
 
     const labOrder = await prisma.labOrder.create({
       data: {
