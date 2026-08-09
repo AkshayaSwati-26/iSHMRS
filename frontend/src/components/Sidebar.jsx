@@ -12,7 +12,10 @@ import {
   FileBarChart,
   LogOut,
   UserCheck,
-  Calendar
+  Calendar,
+  Sparkles,
+  CreditCard,
+  TestTube
 } from 'lucide-react';
 
 const Sidebar = () => {
@@ -56,6 +59,24 @@ const Sidebar = () => {
       path: '/inventory',
       icon: Pill,
       roles: ['SUPER_ADMIN', 'ADMIN', 'PHARMACIST']
+    },
+    {
+      name: 'Billing',
+      path: '/billing',
+      icon: CreditCard,
+      roles: ['SUPER_ADMIN', 'ADMIN', 'RECEPTIONIST', 'PHARMACIST']
+    },
+    {
+      name: 'Lab & Diagnostics',
+      path: '/lab-diagnostics',
+      icon: TestTube,
+      roles: ['SUPER_ADMIN', 'ADMIN', 'DOCTOR', 'NURSE', 'RECEPTIONIST']
+    },
+    {
+      name: 'AI Assistant',
+      path: '/ai-assistant',
+      icon: Sparkles,
+      roles: ['SUPER_ADMIN', 'ADMIN', 'DOCTOR', 'NURSE', 'PHARMACIST']
     },
     {
       name: 'Alerts',

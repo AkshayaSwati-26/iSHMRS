@@ -14,5 +14,6 @@ RUN npx prisma generate
 
 EXPOSE 5000
 
-# Start script: deploy migrations first, then run seed (if needed, seed checks if database contains data), then start server.
-CMD ["sh", "-c", "npx prisma migrate deploy && node prisma/seed.js && npm start"]
+# Start script: run migrations/push, optional seed, and start backend server
+CMD ["sh", "-c", "(npx prisma migrate deploy || npx prisma db push --accept-data-loss) && (node prisma/seed.js || true) && npm start"]
+

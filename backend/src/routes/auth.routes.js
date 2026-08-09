@@ -8,7 +8,10 @@ const {
   changePassword,
   forgotPassword,
   resetPassword,
-  getDoctors
+  getDoctors,
+  patientRegister,
+  patientLogin,
+  checkUHID
 } = require('../controllers/auth.controller');
 const { protect } = require('../middlewares/auth.middleware');
 const validate = require('../middlewares/validate.middleware');
@@ -31,5 +34,10 @@ router.post('/reset-password', validate(resetPasswordSchema), resetPassword);
 router.get('/doctors', protect, getDoctors);
 router.post('/logout', protect, logout);
 router.post('/change-password', protect, validate(changePasswordSchema), changePassword);
+
+// ── Patient Portal Auth ──
+router.get('/patient/check-uhid/:uhid', checkUHID);       // Pre-validate UHID (public)
+router.post('/patient/register', patientRegister);         // Hybrid register (public)
+router.post('/patient/login', patientLogin);               // Patient login (public)
 
 module.exports = router;

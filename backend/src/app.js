@@ -44,6 +44,10 @@ const alertRoutes = require('./routes/alert.routes');
 const reportRoutes = require('./routes/report.routes');
 const cityRoutes = require('./routes/city.routes');
 const appointmentRoutes = require('./routes/appointment.routes');
+const patientPortalRoutes = require('./routes/patient-portal.routes');
+const aiRoutes = require('./routes/ai.routes');
+const billingRoutes = require('./routes/billing.routes');
+const labRoutes = require('./routes/lab.routes');
 
 // ✅ 4. Mount Routes
 app.use('/api/auth', authRoutes);
@@ -58,6 +62,10 @@ app.use('/api/alerts', alertRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/city', cityRoutes);
 app.use('/api/appointments', appointmentRoutes);
+app.use('/api/patient-portal', patientPortalRoutes);
+app.use('/api/ai', aiRoutes);
+app.use('/api/billing', billingRoutes);
+app.use('/api/lab', labRoutes);
 
 // ✅ 5. 404 handler
 app.use((req, res, next) => {

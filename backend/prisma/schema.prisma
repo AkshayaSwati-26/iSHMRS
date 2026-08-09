@@ -1,5 +1,6 @@
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 generator client {
@@ -13,6 +14,7 @@ enum RoleName {
   NURSE
   RECEPTIONIST
   PHARMACIST
+  PATIENT
 }
 
 enum BedStatus {
@@ -136,30 +138,50 @@ model User {
   opdTokens             OPDToken[]             @relation("DoctorTokens")
   reports               Report[]               @relation("GeneratedBy")
   appointments          Appointment[]          @relation("DoctorAppointments")
+  patientProfile        Patient?               @relation("PatientUser")
+  generatedBills        Bill[]                 @relation("BillGeneratedBy")
+  processedPayments     PaymentTransaction[]   @relation("PaymentProcessedBy")
+  orderedLabOrders      LabOrder[]             @relation("LabOrderedBy")
+  resultedLabItems      LabOrderItem[]         @relation("LabResultedBy")
   createdAt             DateTime               @default(now()) @map("created_at")
   updatedAt             DateTime               @updatedAt @map("updated_at")
   deletedAt             DateTime?              @map("deleted_at")
 }
 
 model Patient {
-  id                    String           @id @default(uuid())
-  uhid                  String           @unique
+  id                    String                @id @default(uuid())
+  uhid                  String                @unique
   name                  String
   age                   Int
   gender                String
-  bloodGroup            String?          @map("blood_group")
-  phone                 String?
+  dateOfBirth           DateTime?             @map("date_of_birth")
+  bloodGroup            String?               @map("blood_group")
+  phone                 String?               @unique
+  email                 String?               @unique
   address               String?
-  emergencyContactName  String?          @map("emergency_contact_name")
-  emergencyContactPhone String?          @map("emergency_contact_phone")
-  isAdmitted            Boolean          @default(false) @map("is_admitted")
+  emergencyContactName  String?               @map("emergency_contact_name")
+  emergencyContactPhone String?               @map("emergency_contact_phone")
+  isAdmitted            Boolean               @default(false) @map("is_admitted")
+  // Patient portal user account link
+  userId                String?               @unique @map("user_id")
+  user                  User?                 @relation("PatientUser", fields: [userId], references: [id])
+  // Relations
   histories             PatientHistory[]
   admissions            Admission[]
   opdTokens             OPDToken[]
   appointments          Appointment[]
-  createdAt             DateTime         @default(now()) @map("created_at")
-  updatedAt             DateTime         @updatedAt @map("updated_at")
-  deletedAt             DateTime?        @map("deleted_at")
+  vitalLogs             PatientVitalLog[]
+  symptomEntries        PatientSymptomEntry[]
+  documents             PatientDocument[]
+  feedbacks             PatientFeedback[]
+  insuranceDetails      InsuranceDetails?
+  familyProfiles        FamilyProfile[]
+  medicationAdherence   MedicationAdherence[]
+  bills                 Bill[]
+  labOrders             LabOrder[]
+  createdAt             DateTime              @default(now()) @map("created_at")
+  updatedAt             DateTime              @updatedAt @map("updated_at")
+  deletedAt             DateTime?             @map("deleted_at")
 }
 
 model PatientHistory {
@@ -388,18 +410,299 @@ enum AppointmentStatus {
 }
 
 model Appointment {
-  id              String            @id @default(uuid())
-  patientId       String            @map("patient_id")
-  patient         Patient           @relation(fields: [patientId], references: [id])
-  doctorId        String            @map("doctor_id")
-  doctor          User              @relation("DoctorAppointments", fields: [doctorId], references: [id])
-  departmentId    String            @map("department_id")
-  department      Department        @relation(fields: [departmentId], references: [id])
-  appointmentDate DateTime          @map("appointment_date")
-  timeSlot        String            @map("time_slot")
-  status          AppointmentStatus @default(Scheduled)
-  notes           String?
-  createdAt       DateTime          @default(now()) @map("created_at")
-  updatedAt       DateTime          @updatedAt @map("updated_at")
-  deletedAt       DateTime?         @map("deleted_at")
+  id                    String            @id @default(uuid())
+  patientId             String            @map("patient_id")
+  patient               Patient           @relation(fields: [patientId], references: [id])
+  doctorId              String            @map("doctor_id")
+  doctor                User              @relation("DoctorAppointments", fields: [doctorId], references: [id])
+  departmentId          String            @map("department_id")
+  department            Department        @relation(fields: [departmentId], references: [id])
+  appointmentDate       DateTime          @map("appointment_date")
+  timeSlot              String            @map("time_slot")
+  status                AppointmentStatus @default(Scheduled)
+  notes                 String?
+  preConsultationForm   Json?             @map("pre_consultation_form")
+  createdAt             DateTime          @default(now()) @map("created_at")
+  updatedAt             DateTime          @updatedAt @map("updated_at")
+  deletedAt             DateTime?         @map("deleted_at")
 }
+
+// ============================
+// PATIENT PORTAL MODELS
+// ============================
+
+enum VitalType {
+  BloodPressure
+  BloodSugar
+  Weight
+  Temperature
+  SpO2
+  HeartRate
+  Height
+}
+
+enum SymptomSeverity {
+  Mild
+  Moderate
+  Severe
+}
+
+enum DocumentType {
+  LabReport
+  Radiology
+  Prescription
+  Insurance
+  Discharge
+  Other
+}
+
+model PatientVitalLog {
+  id          String    @id @default(uuid())
+  patientId   String    @map("patient_id")
+  patient     Patient   @relation(fields: [patientId], references: [id])
+  type        VitalType
+  value       Float
+  value2      Float?    // For BP: diastolic
+  unit        String
+  notes       String?
+  loggedAt    DateTime  @default(now()) @map("logged_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+}
+
+model PatientSymptomEntry {
+  id          String          @id @default(uuid())
+  patientId   String          @map("patient_id")
+  patient     Patient         @relation(fields: [patientId], references: [id])
+  symptoms    String[]        // Array of symptom strings
+  severity    SymptomSeverity @default(Mild)
+  notes       String?
+  loggedAt    DateTime        @default(now()) @map("logged_at")
+  createdAt   DateTime        @default(now()) @map("created_at")
+}
+
+model PatientDocument {
+  id          String       @id @default(uuid())
+  patientId   String       @map("patient_id")
+  patient     Patient      @relation(fields: [patientId], references: [id])
+  name        String
+  type        DocumentType @default(Other)
+  fileUrl     String       @map("file_url")  // base64 data URI or cloud URL
+  fileSize    Int?         @map("file_size")
+  mimeType    String?      @map("mime_type")
+  notes       String?
+  uploadedAt  DateTime     @default(now()) @map("uploaded_at")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  deletedAt   DateTime?    @map("deleted_at")
+}
+
+model PatientFeedback {
+  id              String   @id @default(uuid())
+  patientId       String   @map("patient_id")
+  patient         Patient  @relation(fields: [patientId], references: [id])
+  consultationId  String?  @map("consultation_id")
+  doctorId        String?  @map("doctor_id")
+  hospitalId      String?  @map("hospital_id")
+  rating          Int      // 1-5 stars
+  comment         String?
+  isAnonymous     Boolean  @default(false) @map("is_anonymous")
+  npsScore        Int?     @map("nps_score")  // 0-10 Net Promoter Score
+  createdAt       DateTime @default(now()) @map("created_at")
+}
+
+model InsuranceDetails {
+  id             String    @id @default(uuid())
+  patientId      String    @unique @map("patient_id")
+  patient        Patient   @relation(fields: [patientId], references: [id])
+  provider       String
+  policyNumber   String    @map("policy_number")
+  groupNumber    String?   @map("group_number")
+  holderName     String    @map("holder_name")
+  validFrom      DateTime  @map("valid_from")
+  validTo        DateTime  @map("valid_to")
+  coverageAmount Float?    @map("coverage_amount")
+  notes          String?
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+}
+
+model FamilyProfile {
+  id          String    @id @default(uuid())
+  patientId   String    @map("patient_id")
+  patient     Patient   @relation(fields: [patientId], references: [id])
+  name        String
+  relation    String    // Son, Daughter, Spouse, Parent, etc.
+  age         Int?
+  gender      String?
+  bloodGroup  String?   @map("blood_group")
+  phone       String?
+  notes       String?
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+}
+
+model MedicationAdherence {
+  id             String    @id @default(uuid())
+  patientId      String    @map("patient_id")
+  patient        Patient   @relation(fields: [patientId], references: [id])
+  medicineName   String    @map("medicine_name")
+  dosage         String?
+  scheduledTime  String    @map("scheduled_time")  // e.g. "08:00 AM"
+  takenAt        DateTime? @map("taken_at")         // null = not taken yet
+  isTaken        Boolean   @default(false) @map("is_taken")
+  date           DateTime  @default(now())
+  notes          String?
+  createdAt      DateTime  @default(now()) @map("created_at")
+}
+
+// ============================
+// BILLING & INVOICING MODELS
+// ============================
+
+enum BillStatus {
+  Draft
+  Generated
+  Paid
+  PartiallyPaid
+  Cancelled
+}
+
+enum BillItemType {
+  Consultation
+  Bed
+  Medicine
+  Lab
+  Procedure
+  Other
+}
+
+enum PaymentMethod {
+  Cash
+  Card
+  UPI
+  Insurance
+  NetBanking
+}
+
+model Bill {
+  id             String               @id @default(uuid())
+  billNumber     String               @unique @map("bill_number")
+  patientId      String               @map("patient_id")
+  patient        Patient              @relation(fields: [patientId], references: [id])
+  admissionId    String?              @map("admission_id")
+  consultationId String?              @map("consultation_id")
+  hospitalId     String?              @map("hospital_id")
+  status         BillStatus           @default(Generated)
+  subtotal       Float
+  taxAmount      Float                @default(0) @map("tax_amount")      // GST
+  discountAmount Float                @default(0) @map("discount_amount")
+  totalAmount    Float                @map("total_amount")
+  paidAmount     Float                @default(0) @map("paid_amount")
+  balanceAmount  Float                @map("balance_amount")
+  notes          String?
+  generatedById  String?              @map("generated_by_id")
+  generatedBy    User?                @relation("BillGeneratedBy", fields: [generatedById], references: [id])
+  items          BillItem[]
+  payments       PaymentTransaction[]
+  createdAt      DateTime             @default(now()) @map("created_at")
+  updatedAt      DateTime             @updatedAt @map("updated_at")
+  deletedAt      DateTime?            @map("deleted_at")
+}
+
+model BillItem {
+  id          String       @id @default(uuid())
+  billId      String       @map("bill_id")
+  bill        Bill         @relation(fields: [billId], references: [id], onDelete: Cascade)
+  type        BillItemType @default(Other)
+  description String
+  quantity    Int          @default(1)
+  unitPrice   Float        @map("unit_price")
+  totalPrice  Float        @map("total_price")
+  createdAt   DateTime     @default(now()) @map("created_at")
+}
+
+model PaymentTransaction {
+  id              String        @id @default(uuid())
+  billId          String        @map("bill_id")
+  bill            Bill          @relation(fields: [billId], references: [id], onDelete: Cascade)
+  amount          Float
+  method          PaymentMethod @default(Cash)
+  referenceNumber String?       @map("reference_number")
+  notes           String?
+  processedById   String        @map("processed_by_id")
+  processedBy     User          @relation("PaymentProcessedBy", fields: [processedById], references: [id])
+  processedAt     DateTime      @default(now()) @map("processed_at")
+}
+
+// ============================
+// LAB & DIAGNOSTICS MODELS
+// ============================
+
+enum LabOrderStatus {
+  Ordered
+  SampleCollected
+  Processing
+  Resulted
+  Cancelled
+}
+
+enum LabPriority {
+  Routine
+  Urgent
+  STAT
+}
+
+model LabTest {
+  id             String         @id @default(uuid())
+  code           String         @unique
+  name           String
+  category       String         // Hematology, Biochemistry, Radiology, Microbiology, Pathology
+  sampleType     String?        @map("sample_type") // Blood, Urine, Swab, Tissue, X-Ray
+  referenceRange String?        @map("reference_range")
+  unit           String?
+  price          Float          @default(0)
+  hospitalId     String?        @map("hospital_id")
+  items          LabOrderItem[]
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+  deletedAt      DateTime?      @map("deleted_at")
+}
+
+model LabOrder {
+  id             String         @id @default(uuid())
+  orderNumber    String         @unique @map("order_number")
+  patientId      String         @map("patient_id")
+  patient        Patient        @relation(fields: [patientId], references: [id])
+  consultationId String?        @map("consultation_id")
+  admissionId    String?        @map("admission_id")
+  orderedById    String         @map("ordered_by_id")
+  orderedBy      User           @relation("LabOrderedBy", fields: [orderedById], references: [id])
+  hospitalId     String?        @map("hospital_id")
+  status         LabOrderStatus @default(Ordered)
+  priority       LabPriority    @default(Routine)
+  notes          String?
+  items          LabOrderItem[]
+  orderedAt      DateTime       @default(now()) @map("ordered_at")
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+  deletedAt      DateTime?      @map("deleted_at")
+}
+
+model LabOrderItem {
+  id                String       @id @default(uuid())
+  labOrderId        String       @map("lab_order_id")
+  labOrder          LabOrder     @relation(fields: [labOrderId], references: [id], onDelete: Cascade)
+  labTestId         String       @map("lab_test_id")
+  labTest           LabTest      @relation(fields: [labTestId], references: [id])
+  sampleCollectedAt DateTime?    @map("sample_collected_at")
+  resultValue       String?      @map("result_value")
+  resultUnit        String?      @map("result_unit")
+  isAbnormal        Boolean      @default(false) @map("is_abnormal")
+  isCritical        Boolean      @default(false) @map("is_critical")
+  resultNotes       String?      @map("result_notes")
+  resultedAt        DateTime?    @map("resulted_at")
+  resultedById      String?      @map("resulted_by_id")
+  resultedBy        User?        @relation("LabResultedBy", fields: [resultedById], references: [id])
+  createdAt         DateTime     @default(now()) @map("created_at")
+  updatedAt         DateTime     @updatedAt @map("updated_at")
+}
+

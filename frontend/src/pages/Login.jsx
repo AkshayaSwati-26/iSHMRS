@@ -105,13 +105,23 @@ const Login = () => {
                 <span>Authenticating...</span>
               </span>
             ) : (
-              <span>Sign In to iSHRMS</span>
+              <span>Sign In to iSHRMS Staff Portal</span>
             )}
           </button>
         </form>
 
+        {/* Patient Portal Link */}
+        <div className="mt-4 text-center">
+          <a
+            href="/patient/login"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-teal-50 text-teal-700 font-extrabold text-xs border border-teal-200 hover:bg-teal-100 transition-all"
+          >
+            <span>Are you a Patient? Go to Patient Portal →</span>
+          </a>
+        </div>
+
         {/* Demo Accounts Board */}
-        <div className="mt-8 border-t border-slate-200/60 pt-6">
+        <div className="mt-6 border-t border-slate-200/60 pt-6">
           <h4 className="text-xs font-bold text-slate-500 mb-3 tracking-wider uppercase">Demo Accounts (Password: password123)</h4>
           <div className="grid grid-cols-2 gap-2">
             {demoAccounts.map((acc) => (
@@ -126,6 +136,7 @@ const Login = () => {
             ))}
           </div>
         </div>
+
       </div>
     </div>
   );
