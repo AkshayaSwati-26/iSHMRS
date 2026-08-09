@@ -32,24 +32,10 @@
 ## 🏥 Core Modules & Main Features
 
 * **🔐 Role Security (RBAC)**: Custom logins, session guarding (JWT), and redirection to role-specific dashboards for **Super Admins, Admins, Doctors, Nurses, Receptionists, Pharmacists, and Patients**.
-* **👤 Patient Portal Ecosystem (`PATIENT` Role)**:
-  * **Hybrid Registration Flow**: 3-Factor UHID Claim Verification (`UHID` + `DOB` + `Phone`) or New Patient Self-Registration with auto-generated UHID.
-  * **Live Dashboard**: Real-time Socket.io OPD Queue position tracker, next appointment countdown, active inpatient admission alert, Health Score badge (0-100), and medication adherence checklist.
-  * **Personal Care Hub**: Health Timeline, Appointment booking & cancellation, Digital Prescriptions with PDF printing, Vitals tracker with trend line charts, Daily Symptom Diary, Medical Document Vault, and Care Feedback (1-5 Star Ratings & Net Promoter Score).
-* **🤖 AI Intelligence Layer (Google Gemini 1.5)**:
-  * **AI Pre-Triage Symptom Checker**: Analyzes patient symptoms $\rightarrow$ outputs urgency level, differential conditions, recommended department, and triage score (1-10).
-  * **AI Diagnosis Assist (CDSS)**: Doctor co-pilot — analyzes vitals + symptoms $\rightarrow$ differential diagnoses with ICD-10 codes, confidence scores, and recommended lab tests.
-  * **AI Drug Interaction Checker**: Pharmacist co-pilot — analyzes medicine lists for contraindications and severity warnings.
-  * **Staff NLP Chatbot**: Conversational AI aware of live hospital metrics (available beds, waiting queue tokens, active alerts).
-* **💰 Billing & Invoicing Module**:
-  * **OPD & IPD Invoice Generator**: Itemized consultation fees, procedure charges, and daily ward bed charges ($N \text{ Days} \times \text{Daily Rate}$) with GST tax calculations & discounts.
-  * **Payment Tracking**: Multi-method transactions (Cash, Card, UPI / GPay, Insurance TPA, Net Banking) with balance tracking (`Generated` $\rightarrow$ `PartiallyPaid` $\rightarrow$ `Paid`).
-  * **Revenue Analytics**: Today's Collections, Total Revenue, and Outstanding Dues with browser-optimized receipt printing.
-* **🧪 Lab & Diagnostics Module**:
-  * **Clinical Order Lifecycle**: Doctor orders lab requisitions (`Routine`, `Urgent`, `STAT`).
-  * **Sample Collection & Results Entry**: Lab Technicians timestamp sample collection $\rightarrow$ enter test values $\rightarrow$ mark `isAbnormal` or `isCritical` flags.
-  * **Real-Time Push Alerts**: Socket.io push notifications for STAT orders and Critical lab values.
-  * **Standard Lab Catalog**: Pre-seeded with CBC, LFT, KFT, Lipid Profile, Chest X-Ray, and Urine Analysis.
+* **👤 Patient Portal (`PATIENT` Role)**: Features hybrid account claiming (3-factor verification) or self-registration, real-time OPD token queue tracker, appointment booking, digital prescription PDF printing, vitals charts, symptom diary, document vault, and care feedback.
+* **🤖 AI Intelligence (Google Gemini 1.5)**: AI pre-triage symptom checker, doctor CDSS co-pilot (ICD-10 differential diagnoses), pharmacist drug interaction matrix, and conversational NLP staff chatbot.
+* **💰 Billing & Invoicing**: Generates itemized OPD & IPD GST invoices ($N \text{ Days} \times \text{Bed Charge} + \text{Procedures}$), tracks multi-method payments (Cash, UPI, Card, Insurance), and provides live revenue analytics.
+* **🧪 Lab & Diagnostics**: Complete lab order workflow (Doctor requisition $\rightarrow$ Sample Collection $\rightarrow$ Result Entry) with real-time Socket.io STAT & critical value emergency alerts.
 * **🏙️ City-Wide Network (City Dashboard)**: Connects and compares multiple hospitals in real time to balance patient loads, monitor bed occupancy, and alert cities of critical resource shortages.
 * **📋 Real-Time Bed Board**: A visual map of ward beds displaying sensor states: **Available** (green), **Occupied** (red), **Cleaning** (purple), or **Maintenance** (yellow). Supports instant bed allocation and ward transfers.
 * **🩺 Smart OPD Queue**: Prioritizes patient tokens based on clinical severity: **Emergency** (immediate), **High Priority** (Senior Citizen/Pregnancy), or **Normal**.
