@@ -2,13 +2,17 @@
 
 ## Real-Time Clinical Operations + Socket.io Synchronized Inpatient Telemetry
 
+[![Live Demo](https://img.shields.io/badge/Vercel-Live--Demo-black?style=for-the-badge&logo=vercel)](https://i-shrms.vercel.app/)
 [![React](https://img.shields.io/badge/React-Vite-blue?style=flat-square&logo=react)](https://react.dev)
 [![Node.js](https://img.shields.io/badge/Node.js-Express-green?style=flat-square&logo=nodedotjs)](https://nodejs.org)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Database-blue?style=flat-square&logo=postgresql)](https://www.postgresql.org)
+[![Google Gemini](https://img.shields.io/badge/Google--Gemini-1.5--AI-orange?style=flat-square&logo=google)](https://ai.google.dev)
 [![Socket.io](https://img.shields.io/badge/Socket.io-Real--Time-black?style=flat-square&logo=socketdotio)](https://socket.io)
 [![Prisma](https://img.shields.io/badge/Prisma-ORM-indigo?style=flat-square&logo=prisma)](https://www.prisma.io)
 
-> A state-of-the-art, high-class clinical operations platform designed to streamline hospital administration, automate OPD consultation queues, sync metropolitan hospital resources, manage real-time ward bed states, and optimize pharmacy logs.
+> A state-of-the-art, high-class clinical operations platform designed to streamline hospital administration, automate OPD consultation queues, sync metropolitan hospital resources, manage real-time ward bed states, optimize pharmacy logs, empower patients via a personal health portal, provide AI clinical decision support via Google Gemini 1.5, and automate billing & lab workflows.
+
+🌐 **Live Deployed Frontend URL**: [https://i-shrms.vercel.app/](https://i-shrms.vercel.app/)
 
 ---
 
@@ -20,13 +24,32 @@
 | **Visuals & Motion** | Framer Motion + Recharts (SVG) | Micro-interactions, spring animations & live charts |
 | **API & Realtime** | Node.js (Express) + Socket.io | Scalable backend routers & bidirectional event sync |
 | **Database & ORM** | PostgreSQL + Prisma ORM | Relational ACID storage & modern migrations |
+| **AI Engine** | Google Gemini 1.5 REST API | Pre-triage, CDSS diagnosis, drug interaction matrix & staff NLP |
 | **Voice Caller** | Web Speech API | Client-side Text-to-Speech waiting room announcer |
 
 ---
 
 ## 🏥 Core Modules & Main Features
 
-* **🔐 Role Security (RBAC)**: Custom logins, session guarding (JWT), and redirection to role-specific dashboards for **Admins, Doctors, Nurses, Receptionists, and Pharmacists**.
+* **🔐 Role Security (RBAC)**: Custom logins, session guarding (JWT), and redirection to role-specific dashboards for **Super Admins, Admins, Doctors, Nurses, Receptionists, Pharmacists, and Patients**.
+* **👤 Patient Portal Ecosystem (`PATIENT` Role)**:
+  * **Hybrid Registration Flow**: 3-Factor UHID Claim Verification (`UHID` + `DOB` + `Phone`) or New Patient Self-Registration with auto-generated UHID.
+  * **Live Dashboard**: Real-time Socket.io OPD Queue position tracker, next appointment countdown, active inpatient admission alert, Health Score badge (0-100), and medication adherence checklist.
+  * **Personal Care Hub**: Health Timeline, Appointment booking & cancellation, Digital Prescriptions with PDF printing, Vitals tracker with trend line charts, Daily Symptom Diary, Medical Document Vault, and Care Feedback (1-5 Star Ratings & Net Promoter Score).
+* **🤖 AI Intelligence Layer (Google Gemini 1.5)**:
+  * **AI Pre-Triage Symptom Checker**: Analyzes patient symptoms $\rightarrow$ outputs urgency level, differential conditions, recommended department, and triage score (1-10).
+  * **AI Diagnosis Assist (CDSS)**: Doctor co-pilot — analyzes vitals + symptoms $\rightarrow$ differential diagnoses with ICD-10 codes, confidence scores, and recommended lab tests.
+  * **AI Drug Interaction Checker**: Pharmacist co-pilot — analyzes medicine lists for contraindications and severity warnings.
+  * **Staff NLP Chatbot**: Conversational AI aware of live hospital metrics (available beds, waiting queue tokens, active alerts).
+* **💰 Billing & Invoicing Module**:
+  * **OPD & IPD Invoice Generator**: Itemized consultation fees, procedure charges, and daily ward bed charges ($N \text{ Days} \times \text{Daily Rate}$) with GST tax calculations & discounts.
+  * **Payment Tracking**: Multi-method transactions (Cash, Card, UPI / GPay, Insurance TPA, Net Banking) with balance tracking (`Generated` $\rightarrow$ `PartiallyPaid` $\rightarrow$ `Paid`).
+  * **Revenue Analytics**: Today's Collections, Total Revenue, and Outstanding Dues with browser-optimized receipt printing.
+* **🧪 Lab & Diagnostics Module**:
+  * **Clinical Order Lifecycle**: Doctor orders lab requisitions (`Routine`, `Urgent`, `STAT`).
+  * **Sample Collection & Results Entry**: Lab Technicians timestamp sample collection $\rightarrow$ enter test values $\rightarrow$ mark `isAbnormal` or `isCritical` flags.
+  * **Real-Time Push Alerts**: Socket.io push notifications for STAT orders and Critical lab values.
+  * **Standard Lab Catalog**: Pre-seeded with CBC, LFT, KFT, Lipid Profile, Chest X-Ray, and Urine Analysis.
 * **🏙️ City-Wide Network (City Dashboard)**: Connects and compares multiple hospitals in real time to balance patient loads, monitor bed occupancy, and alert cities of critical resource shortages.
 * **📋 Real-Time Bed Board**: A visual map of ward beds displaying sensor states: **Available** (green), **Occupied** (red), **Cleaning** (purple), or **Maintenance** (yellow). Supports instant bed allocation and ward transfers.
 * **🩺 Smart OPD Queue**: Prioritizes patient tokens based on clinical severity: **Emergency** (immediate), **High Priority** (Senior Citizen/Pregnancy), or **Normal**.
@@ -40,58 +63,41 @@
 
 ---
 
+## 🔑 Role-Based Access Control (RBAC) Matrix
+
+| Role | Dashboard View | Key Capabilities |
+| :--- | :--- | :--- |
+| **Super Admin** | Multi-Hospital Global View | Manage multiple hospital clusters, compare occupancy/shortages, view audit logs |
+| **Admin** | Hospital Management | Configure departments, beds, view analytics, manage personnel, handle inventory |
+| **Doctor** | Consultation Dashboard | View OPD queues, update patient vitals, write prescriptions, use AI CDSS, order lab tests |
+| **Nurse** | Ward Bed Board | Monitor bed/sensor status, assign patients to beds, request transfers, discharge inpatients |
+| **Receptionist**| Patient Intake & Billing | Register patients, generate priority OPD tokens, allocate beds, generate bills & collect payments |
+| **Pharmacist** | Inventory & Dispensation | Dispense medicine by UHID, manage stock transactions, run AI Drug Interaction Checker |
+| **Patient** | Personal Health Portal | View OPD queue position, book appointments, log vitals, track prescriptions, view lab results |
+
+---
+
 ## 🔄 System Architecture & Workflow
 ```mermaid
 graph LR
-    %% Custom filled styles matching iSHRMS dashboard colors
     classDef startEnd fill:#2563eb,stroke:#1d4ed8,stroke-width:2px,color:#ffffff,font-weight:bold;
     classDef step fill:#0d9488,stroke:#0f766e,stroke-width:1.5px,color:#ffffff;
     classDef decision fill:#e11d48,stroke:#be123c,stroke-width:2px,color:#ffffff,font-weight:bold;
     classDef inpatient fill:#ea580c,stroke:#c2410c,stroke-width:1.5px,color:#ffffff;
     classDef outpatient fill:#4f46e5,stroke:#3730a3,stroke-width:1.5px,color:#ffffff;
 
-    Start([Start]):::startEnd --> Reg[Patient Registration<br/>- Register/Retrieve UHID<br/>- Generate OPD Token<br/>- Select Dept & Priority]:::step
-    Reg --> Consult[Doctor Consultation<br/>- View Prioritized Queue<br/>- Record Vitals & Diagnosis]:::step
+    Start([Start]):::startEnd --> Reg[Patient Intake / Self-Reg<br/>- Claim UHID or Self-Register<br/>- Generate OPD Token<br/>- Select Dept & Priority]:::step
+    Reg --> Consult[Doctor Consultation & AI CDSS<br/>- View Queue & AI Diagnosis Assist<br/>- Record Vitals, Prescriptions & Lab Requisitions]:::step
     Consult --> Dec{Decision}:::decision
 
-    Dec -->|Outpatient| Pharm[Pharmacy<br/>- Retrieve Prescription<br/>- Dispense Medicines<br/>- Update Inventory]:::outpatient
+    Dec -->|Outpatient| Pharm[Pharmacy & Billing<br/>- AI Drug Interaction Check<br/>- Dispense Medicines & Bill Payment]:::outpatient
     Pharm --> EndOut([End]):::startEnd
 
-    Dec -->|Inpatient| BedAlloc[Bed Allocation<br/>- View Available Beds<br/>- Assign Bed using UHID]:::inpatient
-    BedAlloc --> Care[Inpatient Care<br/>- Administer Treatment<br/>- Transfer Ward Bed if needed]:::inpatient
-    Care --> Discharge[Discharge Process<br/>- Discharge Patient<br/>- Bed Sanitization Loop]:::inpatient
+    Dec -->|Inpatient| BedAlloc[Bed Allocation & Lab Workflow<br/>- Assign Ward Bed & Collect Samples<br/>- Process Lab Results & Critical Value Alerts]:::inpatient
+    BedAlloc --> Care[Inpatient Care & AI Summary<br/>- Administer Treatment & Ward Telemetry<br/>- AI Discharge Summary Generator]:::inpatient
+    Care --> Discharge[Discharge & IPD Billing<br/>- IPD Invoice Settlement<br/>- Bed Sanitization Loop]:::inpatient
     Discharge --> EndIn([End]):::startEnd
 ```
-
-### Workflow Steps
-
-#### Step 1: Patient Intake & Token Generation (Receptionist)
-1. **Registration**: Register a new patient or retrieve an existing profile using the UHID.
-2. **Generate OPD Token**: Select the Department and Priority (Emergency, Senior Citizen/Pregnancy, or Normal).
-3. **Queue Update**: The token is added to the database, and the doctor's queue updates in real-time.
-
-#### Step 2: Doctor Consultation (Doctor)
-1. **View Queue**: The doctor sees the prioritized patient queue.
-2. **Consultation**: Record Vitals, Symptoms, and Diagnosis.
-3. **Decision**:
-   - **Outpatient**: Generate a prescription and send the patient to the pharmacy.
-   - **Inpatient**: Create an admission order for ward allocation.
-
-#### Step 3: Bed Allocation (Receptionist)
-1. **Open Bed Board**: View available hospital beds.
-2. **Bed Status**: Available, Occupied, Cleaning, or Maintenance.
-3. **Assign Bed**: Allocate an available bed using the patient's UHID. The bed status updates instantly.
-
-#### Step 4: Inpatient Care (Doctors & Nurses)
-1. **Monitor Patient**: Update treatment and care records.
-2. **Transfer (If Needed)**: Move the patient to another available bed.
-3. **Discharge**: Complete the discharge process.
-4. **Bed Release**: The bed moves to Cleaning and is later marked Available.
-
-#### Step 5: Pharmacy & Inventory (Pharmacist)
-1. **Retrieve Prescription**: Search using the patient's UHID.
-2. **Dispense Medicine**: Verify stock and dispense medication.
-3. **Inventory Update**: Stock is reduced, the transaction is logged, and a Low Stock Alert is generated if required.
 
 ---
 
@@ -101,95 +107,61 @@ graph LR
 iSHRMS/
 ├── assets/                    # Static assets
 ├── docker-compose.yml         # Multi-container Docker orchestration config
+├── render.yaml                # Render Web Service deployment configuration
+├── vercel.json                # Vercel Single-Page Application deployment config
 ├── README.md                  # Project documentation
 ├── backend/                   # Express.js REST & Real-time Socket.io server
 │   ├── prisma/                # Prisma ORM schema, migrations, and seed scripts
+│   ├── seed_rich_demo_data.js # Comprehensive multi-module demo seeder
+│   ├── verify_workflow.js     # E2E hospital workflow verification suite
 │   └── src/                   # Backend application source code
-│       ├── controllers/       # Route request handlers
+│       ├── controllers/       # Handlers (Auth, Patients, OPD, Beds, Billing, Lab, AI)
 │       ├── middlewares/       # Request interceptors (JWT auth, RBAC validation)
-│       └── routes/            # REST API endpoint route definitions
+│       ├── routes/            # REST API endpoint route definitions
+│       └── services/          # External services (Google Gemini 1.5 REST service)
 └── frontend/                  # React (Vite) client web application
     ├── public/                # Static public assets
     └── src/                   # Client application source code
-        ├── components/        # Reusable UI widgets & dashboard charts
+        ├── components/        # Reusable UI widgets, Patient Layout, & Topbar
         ├── context/           # React context providers (Auth context, Socket state)
-        └── pages/             # Dynamic dashboard views for various roles
+        └── pages/             # Staff & Patient Portal views (AIAssistant, Billing, LabDiagnostics, Patient Portal pages)
 ```
-
----
-
-## 🔑 Role-Based Access Control (RBAC) Matrix
-
-| Role | Dashboard View | Key Capabilities |
-| :--- | :--- | :--- |
-| **Super Admin** | Multi-Hospital Global View | Manage multiple hospital clusters, compare occupancy/shortages, view audit logs |
-| **Admin** | Hospital Management | Configure departments, beds, view analytics, manage personnel, handle inventory |
-| **Doctor** | Consultation Dashboard | View OPD queues, update patient vitals & diagnostics, write prescriptions, order admissions |
-| **Nurse** | Ward Bed Board | Monitor bed/sensor status, assign patients to beds, request transfers, discharge inpatients |
-| **Receptionist**| Patient Intake & Bed Booking | Register patients, generate priority-based OPD tokens, allocate beds |
-| **Pharmacist** | Inventory & Dispensation | Dispense medicine by UHID, manage stock transactions, check low stock & expiry |
-
----
-
-## 🔌 API & Real-Time Sync (REST & WebSockets)
-
-The client and server communicate via a secure REST API (JWT/RBAC protected) alongside a bidirectional Socket.io event loop:
-
-```mermaid
-graph LR
-    classDef client fill:#2563eb,stroke:#1d4ed8,stroke-width:1.5px,color:#ffffff;
-    classDef server fill:#0d9488,stroke:#0f766e,stroke-width:1.5px,color:#ffffff;
-    classDef db fill:#4f46e5,stroke:#3730a3,stroke-width:1.5px,color:#ffffff;
-
-    React[💻 React Frontend]:::client
-    Express[⚙️ Express Backend]:::server
-    DB[(🗄️ PostgreSQL)]:::db
-
-    React -->|REST API:<br/>JWT Auth, Intake, Rx, Inventory| Express
-    React <-->|Socket.io:<br/>Live Bed occupancy & OPD Queue Sync| Express
-    Express <-->|Prisma ORM| DB
-```
-
-- **REST Interface**: Governs secure state mutations and queries: Authentication (`/auth`), Patient Registration (`/patients`), OPD Tokens (`/opd`), Ward Bed Allocation (`/beds`), Admissions/Discharges (`/admissions`), Pharmacy logs (`/medicines`), and City Metrics (`/city`).
-- **Socket.io Sync**: Broadcasts live updates across hospital client views: Bed board state changes (`bed_status_updated`), Patient queue changes (`queue_updated`), Doctor TTS token calls (`token_called`), and system warnings (`system_alert`).
 
 ---
 
 ## 🚀 How to Run & Deploy
 
-### Option A: Using Docker Compose (Recommended - Quickest Setup)
-
-To build and run the entire multi-container stack (PostgreSQL, Express Backend, and Vite Frontend) in a single command:
-
-1. Clone the repository and navigate to the project root:
-   ```bash
-   git clone https://github.com/AkshayaSwati-26/iSHRMS.git
-   cd iSHRMS
-   ```
-2. Build and run the containers in detached mode:
-   ```bash
-   docker-compose up --build -d
-   ```
-3. Once initialized, the services will be running at:
-   - **Frontend App**: [http://localhost:3000](http://localhost:3000)
-   - **Backend REST API**: [http://localhost:5000/api](http://localhost:5000/api)
-   - **Database (PostgreSQL)**: Port `5435` (mapped to container port `5432`)
+### 🌐 Live Production Deployment
+- **Live Frontend**: [https://i-shrms.vercel.app/](https://i-shrms.vercel.app/)
+- **Backend API**: Hosted on Render Web Service
+- **Database**: Cloud PostgreSQL on Neon.tech
 
 ---
 
-### Option B: Local Manual Setup
+### Demo Accounts (Password: `password123`)
+
+- **Patient Portal**: `patient@ishrms.com` / `password123` (UHID: `UHID-20260731-99999`)
+- **Doctor**: `doctor@ishrms.com` / `password123`
+- **Receptionist**: `receptionist@ishrms.com` / `password123`
+- **Pharmacist**: `pharmacist@ishrms.com` / `password123`
+- **Nurse**: `nurse@ishrms.com` / `password123`
+- **Admin**: `admin@ishrms.com` / `password123`
+- **Super Admin**: `superadmin@ishrms.com` / `password123`
+
+---
+
+### Local Manual Setup
 
 #### Prerequisites
 - Node.js (v18+)
 - PostgreSQL database
 
-#### 1. Database Setup
-Ensure PostgreSQL is running and update the `.env` database connection string in `backend/.env`. Run the migrations and seed data:
+#### 1. Database & Backend Setup
 ```bash
 cd backend
 npm install
-npx prisma migrate dev
-node prisma/seed.js
+npx prisma db push
+node seed_rich_demo_data.js
 npm run dev
 ```
 
