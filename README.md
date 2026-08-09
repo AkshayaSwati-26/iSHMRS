@@ -138,16 +138,6 @@ iSHRMS/
 
 ---
 
-### Demo Accounts (Password: `password123`)
-
-- **Patient Portal**: `patient@ishrms.com` / `password123` (UHID: `UHID-20260731-99999`)
-- **Doctor**: `doctor@ishrms.com` / `password123`
-- **Receptionist**: `receptionist@ishrms.com` / `password123`
-- **Pharmacist**: `pharmacist@ishrms.com` / `password123`
-- **Nurse**: `nurse@ishrms.com` / `password123`
-- **Admin**: `admin@ishrms.com` / `password123`
-- **Super Admin**: `superadmin@ishrms.com` / `password123`
-
 ---
 
 ### Local Manual Setup
