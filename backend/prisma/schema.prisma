@@ -94,6 +94,10 @@ enum ReportType {
   BedUtilization
   MedicineConsumption
   PatientStats
+  OPD_Performance
+  Bed_Occupancy
+  Inventory_Status
+  Audit_Log
 }
 
 model Role {
